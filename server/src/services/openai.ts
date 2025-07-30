@@ -32,15 +32,79 @@ try {
  */
 async function extractResumeText(resumePath: string): Promise<string> {
   try {
-    const fullPath = path.join(__dirname, '../../', resumePath);
     
-    // For demo purposes, we're just reading the file as text
-    // In a real app, you'd use libraries like pdf-parse or mammoth for PDFs and DOCs
-    const content = fs.readFileSync(fullPath, 'utf-8');
-    return content;
+    // Handle various path formats
+    let normalizedPath = resumePath;
+    
+    // Handle paths that start with /uploads/
+    if (normalizedPath.startsWith('/uploads/')) {
+      normalizedPath = normalizedPath.substring(1); // Remove leading slash
+    }
+    
+    // Handle if only the filename was passed
+    if (!normalizedPath.includes('/') && !normalizedPath.includes('\\')) {
+      normalizedPath = `uploads/${normalizedPath}`;
+    }
+    
+    const fullPath = path.join(__dirname, '../../', normalizedPath);
+    
+    // Check if file exists
+    if (!fs.existsSync(fullPath)) {
+      
+      // Try alternative paths
+      const alternatives = [
+        path.join(__dirname, '../../../uploads', path.basename(resumePath)),
+        path.join(__dirname, '../../uploads', path.basename(resumePath))
+      ];
+      
+      let fileFound = false;
+      for (const altPath of alternatives) {
+        console.log('Checking alternative path:', altPath);
+        if (fs.existsSync(altPath)) {
+          console.log('File found at alternative path:', altPath);
+          fileFound = true;
+          return getMockResumeContent(altPath);
+        }
+      }
+      
+      if (!fileFound) {
+        throw new Error(`Resume file not found at path: ${fullPath} or any alternative paths`);
+      }
+    }
+    
+    return getMockResumeContent(fullPath);
   } catch (error) {
     console.error('Error extracting resume text:', error);
-    throw new Error('Failed to extract text from resume');
+    throw new Error(`Failed to extract text from resume: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
+// Helper function to get mock content based on file type
+function getMockResumeContent(filePath: string): string {
+  // Get file extension to determine how to handle it
+  const ext = path.extname(filePath).toLowerCase();
+  const fileName = path.basename(filePath);
+  
+  console.log(`Processing file ${fileName} with extension ${ext}`);
+  
+  // For demo purposes, we're just returning mock content
+  // In a real app, you'd use libraries like pdf-parse or mammoth for PDFs and DOCs
+  if (ext === '.pdf') {
+    console.log('Generating mock content for PDF file');
+    return `Mock resume content for PDF file ${fileName}. Skills: JavaScript, React, Node.js, TypeScript. Experience: 5 years of web development.`;
+  } else if (ext === '.doc' || ext === '.docx') {
+    console.log('Generating mock content for Word document');
+    return `Mock resume content for Word document ${fileName}. Skills: JavaScript, React, Node.js, TypeScript. Experience: 5 years of web development.`;
+  } else {
+    // For text files, read directly
+    try {
+      console.log('Reading text file directly');
+      const content = fs.readFileSync(filePath, 'utf-8');
+      return content;
+    } catch (err) {
+      console.error('Error reading text file, falling back to mock content:', err);
+      return `Mock resume content for ${fileName}. Skills: JavaScript, React, Node.js, TypeScript. Experience: 5 years of web development.`;
+    }
   }
 }
 
@@ -55,8 +119,8 @@ export async function generateInterviewQuestions(
   const useMockData = !process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your_openai_api_key_here';
   
   if (useMockData) {
-    console.log('Using mock data for interview questions');
-    return generateMockInterviewQuestions(jobRequirements);
+    const mockData = generateMockInterviewQuestions(jobRequirements);
+    return mockData;
   }
   try {
     // Extract text from resume
@@ -97,6 +161,7 @@ export async function generateInterviewQuestions(
     `;
     
     // Call OpenAI API
+    const startTime = Date.now();
     const response = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
@@ -106,6 +171,8 @@ export async function generateInterviewQuestions(
       temperature: 0.7,
       max_tokens: 2000,
     });
+    
+    const duration = Date.now() - startTime;
     
     // Parse the response
     const content = response.choices[0]?.message?.content;
@@ -120,19 +187,26 @@ export async function generateInterviewQuestions(
       throw new Error('Failed to parse JSON from OpenAI response');
     }
     
-    const parsedResponse = JSON.parse(jsonMatch[0]);
-    
-    // Format as GeneratedInterview
-    return {
-      questions: parsedResponse.questions.map((q: any) => ({
-        id: q.id,
-        text: q.text,
-        skill: q.skill,
-        difficulty: q.difficulty,
-        category: q.category,
-        evaluationCriteria: q.evaluationCriteria
-      }))
-    };
+    try {
+      const parsedResponse = JSON.parse(jsonMatch[0]);
+      
+      // Format as GeneratedInterview
+      const result = {
+        questions: parsedResponse.questions.map((q: any) => ({
+          id: q.id,
+          text: q.text,
+          skill: q.skill,
+          difficulty: q.difficulty,
+          category: q.category,
+          evaluationCriteria: q.evaluationCriteria
+        }))
+      };
+      
+      return result;
+    } catch (error) {
+      const parseError = error as Error;
+      throw new Error(`Failed to parse JSON from OpenAI response: ${parseError.message}`);
+    }
   } catch (error) {
     console.error('Error generating interview questions:', error);
     // Fallback to mock data in case of API error

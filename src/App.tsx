@@ -12,7 +12,7 @@ import {
   adaptResumeToFrontend, 
   createInterviewFromBackend 
 } from './services/api';
-import type { JobRequirements, UploadProgress } from './types';
+import type { JobRequirements, UploadProgress, Resume } from './types';
 
 function App() {
   const {
@@ -63,17 +63,17 @@ function App() {
       
       // Convert backend resume format to frontend format
       const resume = adaptResumeToFrontend(resumeData, file);
-      
       setResume(resume);
+      
       if (uploadProgress) {
         setUploadProgress({ ...uploadProgress, progress: 100, status: 'completed' });
       }
       setCurrentStep('generating');
       
       // Generate interview questions
-      handleGenerateInterview();
+      handleGenerateInterview(resume);
     } catch (error) {
-      console.error('Error uploading resume:', error);
+      console.error('[APP] Error uploading resume:', error);
       if (uploadProgress) {
         setUploadProgress({ ...uploadProgress, status: 'error' });
       }
@@ -82,23 +82,28 @@ function App() {
     }
   };
 
-  const handleGenerateInterview = async () => {
-    if (!jobRequirements || !resume) return;
+  const handleGenerateInterview = async (resumeParam?: Resume) => {
+    
+    // Use the passed resume parameter if available, otherwise fall back to state
+    const resumeToUse = resumeParam || resume;
+    
+    if (!jobRequirements || !resumeToUse) {
+      return;
+    }
     
     setCurrentStep('generating');
     setIsLoading(true);
 
     try {
       // Generate interview questions using API service
-      const interviewData = await generateInterview(jobRequirements, resume.content || '');
+      const interviewData = await generateInterview(jobRequirements, resumeToUse?.content || '');
       
       // Create interview object from backend data using adapter
-      const interview = createInterviewFromBackend(interviewData, jobRequirements, resume);
-
+      const interview = createInterviewFromBackend(interviewData, jobRequirements, resumeToUse);
       setGeneratedInterview(interview);
       setCurrentStep('results');
     } catch (error) {
-      console.error('Error generating interview:', error);
+      console.error('[APP] Error generating interview:', error);
     } finally {
       setIsLoading(false);
     }
@@ -145,7 +150,7 @@ function App() {
             {resume && (
               <div className="flex justify-end">
                 <button
-                  onClick={handleGenerateInterview}
+                  onClick={() => handleGenerateInterview(resume)}
                   disabled={isLoading}
                   className="px-6 py-2 bg-green-600 text-white font-medium rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >

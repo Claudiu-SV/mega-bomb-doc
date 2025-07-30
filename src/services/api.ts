@@ -40,19 +40,23 @@ export const uploadResume = async (file: File, onProgress?: (progress: number) =
   const formData = new FormData();
   formData.append('resume', file);
   
-  const response = await api.post('/upload/resume', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-    onUploadProgress: (progressEvent) => {
-      if (progressEvent.total && onProgress) {
-        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-        onProgress(percentCompleted);
-      }
-    },
-  });
-  
-  return response.data.file;
+  try {
+    const response = await api.post('/upload/resume', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total && onProgress) {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+          onProgress(percentCompleted);
+        }
+      },
+    });
+    
+    return response.data.file;
+  } catch (error) {
+    throw error;
+  }
 };
 
 /**
@@ -75,12 +79,16 @@ export const generateInterview = async (
   jobRequirements: JobRequirements,
   resumePath: string
 ): Promise<BackendGeneratedInterview> => {
-  const response = await api.post('/interview/generate', {
-    jobRequirements,
-    resumePath,
-  });
-  
-  return response.data.interview;
+  try {
+    const response = await api.post('/interview/generate', {
+      jobRequirements,
+      resumePath,
+    });
+    
+    return response.data.interview;
+  } catch (error) {
+    throw error;
+  }
 };
 
 /**

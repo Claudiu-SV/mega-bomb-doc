@@ -18,8 +18,8 @@ router.post('/generate', validateJobRequirements, validateResumePath, async (req
       return res.status(400).json({ error: 'Resume path is required' });
     }
     
-    // Generate interview questions using OpenAI
-    const interview = await generateInterviewQuestions(jobRequirements, resumePath);
+    const cleanedResumePath = resumePath.startsWith('/') ? resumePath.substring(1) : resumePath;
+    const interview = await generateInterviewQuestions(jobRequirements, cleanedResumePath);
     
     res.status(200).json({ interview });
   } catch (error) {
