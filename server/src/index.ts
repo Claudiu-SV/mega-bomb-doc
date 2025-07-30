@@ -7,7 +7,14 @@ import { interviewRouter } from './routes/interview';
 import { errorHandler, notFound } from './middleware/errorHandler';
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
+
+// Check if OpenAI API key is set
+if (process.env.OPENAI_API_KEY) {
+  console.log('OpenAI API key is set. Using real OpenAI API for interview questions.');
+} else {
+  console.warn('Warning: OpenAI API key is not set. Using mock data for development.');
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;

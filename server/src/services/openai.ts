@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import type { GeneratedInterview, JobRequirements } from '../types';
 
 // Load environment variables
-dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 
 // Initialize OpenAI client
 let openai: OpenAI;
@@ -19,6 +19,7 @@ try {
     openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
+    console.log('OpenAI client initialized successfully with API key');
   }
 } catch (error) {
   console.error('Error initializing OpenAI client:', error);
@@ -85,25 +86,102 @@ function getMockResumeContent(filePath: string): string {
   const ext = path.extname(filePath).toLowerCase();
   const fileName = path.basename(filePath);
   
-  console.log(`Processing file ${fileName} with extension ${ext}`);
-  
   // For demo purposes, we're just returning mock content
   // In a real app, you'd use libraries like pdf-parse or mammoth for PDFs and DOCs
   if (ext === '.pdf') {
-    console.log('Generating mock content for PDF file');
-    return `Mock resume content for PDF file ${fileName}. Skills: JavaScript, React, Node.js, TypeScript. Experience: 5 years of web development.`;
+    return `
+John Doe
+Senior Full Stack Developer
+john.doe@example.com | (555) 123-4567 | linkedin.com/in/johndoe
+
+SUMMARY
+Experienced Full Stack Developer with 5+ years of expertise in JavaScript, React, Node.js, and TypeScript. Passionate about creating efficient, scalable web applications with clean, maintainable code.
+
+SKILLS
+• Frontend: React, Redux, TypeScript, JavaScript (ES6+), HTML5, CSS3, Tailwind CSS
+• Backend: Node.js, Express, RESTful APIs, GraphQL
+• Databases: MongoDB, PostgreSQL, MySQL
+• Tools: Git, Docker, AWS, Jest, Webpack
+
+EXPERIENCE
+Senior Full Stack Developer | Tech Solutions Inc. | 2022 - Present
+• Led development of a customer portal that improved user engagement by 35%
+• Implemented CI/CD pipelines that reduced deployment time by 50%
+• Mentored junior developers and conducted code reviews
+
+Full Stack Developer | WebDev Agency | 2019 - 2022
+• Developed responsive web applications using React and Node.js
+• Optimized database queries resulting in 40% faster load times
+• Integrated third-party APIs for payment processing and authentication
+
+EDUCATION
+B.S. Computer Science | University of Technology | 2019
+`;
   } else if (ext === '.doc' || ext === '.docx') {
-    console.log('Generating mock content for Word document');
-    return `Mock resume content for Word document ${fileName}. Skills: JavaScript, React, Node.js, TypeScript. Experience: 5 years of web development.`;
+    return `
+Emily Smith
+UI/UX Designer & Frontend Developer
+emily.smith@example.com | (555) 987-6543
+
+SUMMARY
+Creative UI/UX Designer and Frontend Developer with 4 years of experience creating beautiful, intuitive interfaces. Skilled in translating business requirements into user-friendly designs and implementing them with modern frontend technologies.
+
+SKILLS
+• Design: Figma, Adobe XD, Sketch, Photoshop, Illustrator
+• Frontend: React, Vue.js, JavaScript, TypeScript, HTML5, CSS3/SASS
+• Tools: Git, Jira, Trello, Zeplin
+• Other: Responsive Design, Accessibility, User Testing
+
+EXPERIENCE
+UI/UX Designer & Frontend Developer | Creative Digital | 2021 - Present
+• Redesigned company flagship product increasing user satisfaction by 45%
+• Implemented component library that improved development efficiency by 30%
+• Conducted user research and usability testing to inform design decisions
+
+Frontend Developer | Web Innovations | 2019 - 2021
+• Developed responsive web interfaces using React and Vue.js
+• Collaborated with designers to implement pixel-perfect UI components
+• Optimized frontend performance resulting in 25% faster page loads
+
+EDUCATION
+B.A. Digital Design | Design Institute | 2019
+Certification in User Experience Design | UX Academy | 2020
+`;
   } else {
     // For text files, read directly
     try {
-      console.log('Reading text file directly');
       const content = fs.readFileSync(filePath, 'utf-8');
       return content;
     } catch (err) {
-      console.error('Error reading text file, falling back to mock content:', err);
-      return `Mock resume content for ${fileName}. Skills: JavaScript, React, Node.js, TypeScript. Experience: 5 years of web development.`;
+      return `
+Michael Johnson
+Backend Developer
+michael.johnson@example.com | (555) 456-7890
+
+SUMMARY
+Detail-oriented Backend Developer with 3+ years of experience building robust server-side applications. Specialized in API development, database optimization, and cloud infrastructure.
+
+SKILLS
+• Languages: JavaScript, TypeScript, Python, Go
+• Backend: Node.js, Express, Django, FastAPI
+• Databases: PostgreSQL, MongoDB, Redis
+• Cloud: AWS, Docker, Kubernetes, CI/CD
+
+EXPERIENCE
+Backend Developer | Cloud Systems Inc. | 2022 - Present
+• Developed scalable microservices architecture handling 1M+ daily requests
+• Implemented data caching strategy that reduced database load by 60%
+• Created comprehensive API documentation and developer guides
+
+Junior Developer | Tech Startups LLC | 2020 - 2022
+• Built RESTful APIs for mobile and web applications
+• Managed database migrations and schema updates
+• Implemented automated testing increasing code coverage to 85%
+
+EDUCATION
+B.S. Computer Engineering | Tech University | 2020
+AWS Certified Developer | 2021
+`;
     }
   }
 }
@@ -119,8 +197,22 @@ export async function generateInterviewQuestions(
   const useMockData = !process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your_openai_api_key_here';
   
   if (useMockData) {
+    console.log('No valid OpenAI API key found. Using mock interview questions.');
     const mockData = generateMockInterviewQuestions(jobRequirements);
     return mockData;
+  }
+  
+  // If we have an API key but no OpenAI client, try to initialize it
+  if (!openai) {
+    try {
+      openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+      console.log('OpenAI client initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize OpenAI client:', error);
+      return generateMockInterviewQuestions(jobRequirements);
+    }
   }
   try {
     // Extract text from resume
@@ -128,7 +220,7 @@ export async function generateInterviewQuestions(
     
     // Prepare prompt for OpenAI
     const prompt = `
-      You are an expert technical interviewer. Generate interview questions based on the following:
+      You are an expert technical interviewer. Your task is to generate a COMPLETE SET of interview questions based on the following information:
       
       JOB REQUIREMENTS:
       ${JSON.stringify(jobRequirements)}
@@ -136,9 +228,20 @@ export async function generateInterviewQuestions(
       CANDIDATE RESUME:
       ${resumeText}
       
-      Generate a set of interview questions that will help assess if this candidate is a good fit for the role.
-      Include a mix of technical questions, behavioral questions, and questions specific to their experience.
-      For each question, include:
+      CRITICAL INSTRUCTION: You MUST generate the EXACT number of questions specified below. This is non-negotiable.
+      
+      YOU MUST GENERATE EXACTLY:
+      - 5 EASY technical questions
+      - 5 MEDIUM technical questions
+      - 5 HARD technical questions
+      - 5 behavioral questions
+      - 5 experience-based questions
+      
+      That's a total of 25 questions. Do not generate fewer questions under any circumstances.
+      
+      The technical questions must directly relate to the technologies and skills mentioned in both the job requirements and the candidate's resume.
+      
+      For each question, you must include:
       1. The question text
       2. What skill or qualification it tests
       3. A difficulty rating (Easy, Medium, Hard)
@@ -160,19 +263,43 @@ export async function generateInterviewQuestions(
       }
     `;
     
-    // Call OpenAI API
+    // Call OpenAI API with retry logic and error handling
     const startTime = Date.now();
-    const response = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        { role: "system", content: "You are an expert technical interviewer assistant." },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.7,
-      max_tokens: 2000,
-    });
+    let response;
     
-    const duration = Date.now() - startTime;
+    try {
+      response = await openai.chat.completions.create({
+        model: "gpt-4.1-nano",
+        messages: [
+          { role: "system", content: "You are an expert technical interviewer assistant. You must follow instructions exactly and completely." },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.8,
+        max_tokens: 4000,
+        presence_penalty: 0.1,
+        frequency_penalty: 0.1,
+      });
+      
+      const duration = Date.now() - startTime;
+      console.log(`OpenAI API call completed in ${duration}ms`);
+    } catch (apiError: any) {
+      console.error('OpenAI API error:', apiError);
+      
+      // Handle specific API errors
+      if (apiError.status === 429) {
+        console.error('Rate limit exceeded. Using mock data as fallback.');
+        return generateMockInterviewQuestions(jobRequirements);
+      }
+      
+      if (apiError.status === 500) {
+        console.error('OpenAI server error. Using mock data as fallback.');
+        return generateMockInterviewQuestions(jobRequirements);
+      }
+      
+      // For any other API error, fall back to mock data
+      console.error('Unexpected API error. Using mock data as fallback.');
+      return generateMockInterviewQuestions(jobRequirements);
+    }
     
     // Parse the response
     const content = response.choices[0]?.message?.content;
