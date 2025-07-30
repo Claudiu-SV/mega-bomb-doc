@@ -6,7 +6,13 @@ import ResumeUpload from './components/ResumeUpload';
 import InterviewQuestions from './components/InterviewQuestions';
 import LoadingSpinner from './components/LoadingSpinner';
 import { useAppStore } from './store/useAppStore';
-import type { JobRequirements, Resume, GeneratedInterview, UploadProgress } from './types';
+import { 
+  uploadResume, 
+  generateInterview, 
+  adaptResumeToFrontend, 
+  createInterviewFromBackend 
+} from './services/api';
+import type { JobRequirements, UploadProgress } from './types';
 
 function App() {
   const {
@@ -38,98 +44,64 @@ function App() {
   const handleResumeUpload = async (file: File) => {
     setIsLoading(true);
     
-    // Simulate upload progress
-    const progress: UploadProgress = {
+    // Initialize upload progress
+    const initialProgress: UploadProgress = {
       fileName: file.name,
       progress: 0,
       status: 'uploading'
     };
-    setUploadProgress(progress);
+    setUploadProgress(initialProgress);
 
-    // Simulate upload progress
-    const progressInterval = setInterval(() => {
-      setUploadProgress({
-        fileName: file.name,
-        progress: Math.min((uploadProgress?.progress || 0) + 10, 100),
-        status: (uploadProgress?.progress || 0) + 10 >= 100 ? 'completed' : 'uploading'
+    try {
+      // Upload resume using API service
+      const resumeData = await uploadResume(file, (progressPercent) => {
+        const currentProgress = uploadProgress;
+        if (currentProgress) {
+          setUploadProgress({ ...currentProgress, progress: progressPercent });
+        }
       });
-    }, 200);
-
-    // Simulate upload completion
-    setTimeout(() => {
-      clearInterval(progressInterval);
-      const uploadedResume: Resume = {
-        id: Date.now().toString(),
-        fileName: file.name,
-        fileSize: file.size,
-        uploadedAt: new Date()
-      };
-      setResume(uploadedResume);
-      setUploadProgress(null);
+      
+      // Convert backend resume format to frontend format
+      const resume = adaptResumeToFrontend(resumeData, file);
+      
+      setResume(resume);
+      if (uploadProgress) {
+        setUploadProgress({ ...uploadProgress, progress: 100, status: 'completed' });
+      }
+      setCurrentStep('generating');
+      
+      // Generate interview questions
+      handleGenerateInterview();
+    } catch (error) {
+      console.error('Error uploading resume:', error);
+      if (uploadProgress) {
+        setUploadProgress({ ...uploadProgress, status: 'error' });
+      }
+    } finally {
       setIsLoading(false);
-    }, 2500);
+    }
   };
 
-  const handleGenerateQuestions = async () => {
+  const handleGenerateInterview = async () => {
     if (!jobRequirements || !resume) return;
     
     setCurrentStep('generating');
     setIsLoading(true);
 
-    // Simulate API call to generate questions
-    // In real implementation, this would call the backend API
-    setTimeout(() => {
-      const mockQuestions = [
-        {
-          id: '1',
-          question: 'Can you walk me through your experience with React and TypeScript? How have you used these technologies in your previous projects?',
-          category: 'technical' as const,
-          difficulty: 'medium' as const,
-          suggestedTime: 5
-        },
-        {
-          id: '2',
-          question: 'Describe a challenging technical problem you solved recently. What was your approach and what did you learn from it?',
-          category: 'behavioral' as const,
-          difficulty: 'medium' as const,
-          suggestedTime: 8
-        },
-        {
-          id: '3',
-          question: 'How would you handle a situation where you disagree with a technical decision made by your team lead?',
-          category: 'situational' as const,
-          difficulty: 'medium' as const,
-          suggestedTime: 6
-        },
-        {
-          id: '4',
-          question: 'What specific experience do you have with Node.js and Express.js? Can you describe a project where you used these technologies?',
-          category: 'experience' as const,
-          difficulty: 'easy' as const,
-          suggestedTime: 4
-        },
-        {
-          id: '5',
-          question: 'Explain the concept of closures in JavaScript and provide a practical example of when you might use them.',
-          category: 'technical' as const,
-          difficulty: 'hard' as const,
-          suggestedTime: 10
-        }
-      ];
-
-      const interview: GeneratedInterview = {
-        id: Date.now().toString(),
-        jobRequirements,
-        resume,
-        questions: mockQuestions,
-        generatedAt: new Date(),
-        totalEstimatedTime: mockQuestions.reduce((total, q) => total + q.suggestedTime, 0)
-      };
+    try {
+      // Generate interview questions using API service
+      const interviewData = await generateInterview(jobRequirements, resume.content || '');
+      
+      // Create interview object from backend data using adapter
+      const interview = createInterviewFromBackend(interviewData, jobRequirements, resume);
 
       setGeneratedInterview(interview);
       setCurrentStep('results');
+    } catch (error) {
+      console.error('Error generating interview:', error);
+    } finally {
       setIsLoading(false);
-    }, 3000);
+    }
   };
 
   const handleStartOver = () => {
@@ -140,8 +112,6 @@ function App() {
     // In real implementation, this would generate and download a PDF
     alert('Export functionality will be implemented with backend integration.');
   };
-
-
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -175,7 +145,7 @@ function App() {
             {resume && (
               <div className="flex justify-end">
                 <button
-                  onClick={handleGenerateQuestions}
+                  onClick={handleGenerateInterview}
                   disabled={isLoading}
                   className="px-6 py-2 bg-green-600 text-white font-medium rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
