@@ -226,9 +226,27 @@ export async function generateInterviewQuestions(
       RESUME: ${resumeText}
       
       GENERATE EXACTLY:
-      - 2 behavioral questions
-      - 6 experience-based questions
+      - 2 behavioral questions about collaboration and adaptability
+      - 6 experience-based questions focusing on problem-solving and innovation
       - 12 technical questions (medium/hard difficulty)
+      
+      IMPORTANT: For technical questions, DO NOT ask general experience questions like "Tell me about your experience with X technology." Instead, create specific problem-solving questions that test deep technical knowledge, such as:
+      - "How would you implement X feature using Y technology?"
+      - "What's the best approach to solve X problem in Y framework?"
+      - "How would you optimize X for better performance?"
+      - "Explain how you would handle X edge case in Y scenario"
+      - "What architecture would you choose for X requirement and why?"
+      - "How would you debug X issue in Y environment?"
+      
+      Technical questions should focus on:
+      - Specific implementation strategies and best practices
+      - Architecture and design decisions
+      - Performance optimization techniques
+      - Security considerations and solutions
+      - Debugging and troubleshooting approaches
+      - State management and data flow
+      - API design and integration patterns
+      - Testing strategies and methodologies
       
       For each question include:
       - Question text
@@ -264,7 +282,7 @@ export async function generateInterviewQuestions(
           { role: "user", content: prompt }
         ],
         temperature: 0.7,
-        max_tokens: 8000, // Reduced from 40000 to a more reasonable value for interview questions
+        max_tokens: 10000,
         presence_penalty: 0.1,
         frequency_penalty: 0.1,
       });
