@@ -395,38 +395,129 @@ function generateMockInterviewQuestions(jobRequirements: JobRequirements): Gener
     questions: [
       {
         id: '1',
-        text: `Tell me about your experience with ${jobRequirements.requiredSkills[0] || 'web development'}.`,
+        text: 'Describe a situation where you had to collaborate with a difficult team member. How did you handle it?',
         difficulty: 'Medium',
-        category: 'Technical',
-        evaluationCriteria: 'Look for depth of knowledge and practical experience.'
+        category: 'Behavioral',
+        evaluationCriteria: 'Look for emotional intelligence, conflict resolution skills, and ability to maintain professional relationships despite challenges.'
       },
       {
         id: '2',
-        text: 'Describe a challenging project you worked on and how you overcame obstacles.',
+        text: 'Tell me about a time when you had to adapt to a significant change in project requirements or technology stack mid-project.',
         difficulty: 'Medium',
         category: 'Behavioral',
-        evaluationCriteria: 'Assess problem-solving approach and resilience.'
+        evaluationCriteria: 'Assess adaptability, resilience, and ability to quickly learn and apply new concepts under pressure.'
       },
       {
         id: '3',
-        text: 'How do you stay updated with the latest technologies in your field?',
-        difficulty: 'Easy',
-        category: 'Behavioral',
-        evaluationCriteria: 'Look for commitment to professional development.'
+        text: 'Describe a project where you had to make a difficult technical decision. What was your decision-making process?',
+        difficulty: 'Medium',
+        category: 'Experience',
+        evaluationCriteria: 'Evaluate analytical thinking, weighing of trade-offs, and ability to make sound technical decisions.'
       },
       {
         id: '4',
-        text: `What experience do you have with ${jobRequirements.requiredSkills[1] || 'team collaboration'}?`,
+        text: 'Share an example of how you optimized the performance of an application. What metrics did you use and what improvements did you achieve?',
         difficulty: 'Medium',
         category: 'Experience',
-        evaluationCriteria: 'Evaluate teamwork and collaboration skills.'
+        evaluationCriteria: 'Look for understanding of performance metrics, optimization techniques, and measurable results.'
       },
       {
         id: '5',
-        text: 'Explain how you would approach a complex technical problem with limited documentation.',
+        text: 'Describe a situation where you identified and fixed a critical bug in production. What was your approach?',
+        difficulty: 'Hard',
+        category: 'Experience',
+        evaluationCriteria: 'Assess debugging skills, problem-solving under pressure, and understanding of production environments.'
+      },
+      {
+        id: '6',
+        text: 'Tell me about a time when you had to refactor a significant portion of code. How did you approach it and what was the outcome?',
+        difficulty: 'Medium',
+        category: 'Experience',
+        evaluationCriteria: 'Evaluate code quality awareness, refactoring strategies, and ability to improve maintainability.'
+      },
+      {
+        id: '7',
+        text: 'How would you implement a secure authentication system using JWT in a React application?',
+        difficulty: 'Medium',
+        category: 'Technical',
+        evaluationCriteria: 'Look for understanding of JWT, secure storage methods, refresh token strategies, and protection against common vulnerabilities.'
+      },
+      {
+        id: '8',
+        text: `What's the best approach to manage global state in a large-scale ${jobRequirements.requiredSkills.includes('React') ? 'React' : 'frontend'} application? Compare different solutions and their trade-offs.`,
         difficulty: 'Hard',
         category: 'Technical',
-        evaluationCriteria: 'Assess analytical thinking and resourcefulness.'
+        evaluationCriteria: 'Assess knowledge of state management libraries (Redux, Context API, MobX, Zustand, etc.), understanding of their pros and cons, and ability to choose appropriate solutions based on requirements.'
+      },
+      {
+        id: '9',
+        text: 'How would you optimize the performance of a React component that renders a large list of items?',
+        difficulty: 'Medium',
+        category: 'Technical',
+        evaluationCriteria: 'Look for knowledge of virtualization, memoization, React.memo, useMemo, useCallback, and other optimization techniques.'
+      },
+      {
+        id: '10',
+        text: 'Explain how you would implement a CI/CD pipeline for a microservices architecture. What tools would you use and why?',
+        difficulty: 'Hard',
+        category: 'Technical',
+        evaluationCriteria: 'Evaluate understanding of CI/CD concepts, knowledge of relevant tools (Jenkins, GitHub Actions, etc.), and awareness of microservices deployment challenges.'
+      },
+      {
+        id: '11',
+        text: 'How would you handle API rate limiting in a frontend application to prevent exceeding quota limits?',
+        difficulty: 'Medium',
+        category: 'Technical',
+        evaluationCriteria: 'Assess knowledge of throttling, debouncing, request queuing, and retry strategies.'
+      },
+      {
+        id: '12',
+        text: 'Describe your approach to implementing accessibility features in a web application. What standards would you follow?',
+        difficulty: 'Medium',
+        category: 'Technical',
+        evaluationCriteria: 'Look for knowledge of WCAG guidelines, semantic HTML, ARIA attributes, keyboard navigation, and testing tools for accessibility.'
+      },
+      {
+        id: '13',
+        text: 'How would you design a system to handle real-time updates from multiple sources in a web application?',
+        difficulty: 'Hard',
+        category: 'Technical',
+        evaluationCriteria: 'Evaluate understanding of WebSockets, Server-Sent Events, long polling, and state synchronization strategies.'
+      },
+      {
+        id: '14',
+        text: 'What architecture would you choose for a mobile application that needs to work offline and sync data when online?',
+        difficulty: 'Hard',
+        category: 'Technical',
+        evaluationCriteria: 'Assess knowledge of offline-first design, local storage options, conflict resolution strategies, and synchronization patterns.'
+      },
+      {
+        id: '15',
+        text: 'How would you implement end-to-end type safety across a full-stack TypeScript application?',
+        difficulty: 'Hard',
+        category: 'Technical',
+        evaluationCriteria: 'Look for understanding of type sharing between frontend and backend, schema validation, code generation tools, and TypeScript best practices.'
+      },
+      {
+        id: '16',
+        text: 'Explain how you would debug a memory leak in a JavaScript application. What tools would you use?',
+        difficulty: 'Hard',
+        category: 'Technical',
+        evaluationCriteria: 'Evaluate knowledge of browser dev tools, heap snapshots, performance profiling, common memory leak causes, and resolution strategies.'
+      },
+      {
+        id: '17',
+        text: 'How would you implement a secure file upload feature that prevents malicious file uploads?',
+        difficulty: 'Medium',
+        category: 'Technical',
+        evaluationCriteria: 'Assess understanding of file validation, content-type verification, virus scanning, secure storage, and potential vulnerabilities.'
+      },
+      {
+        id: '18',
+        text: 'What strategies would you use to optimize the loading performance of a web application?',
+        difficulty: 'Medium',
+        category: 'Technical',
+        evaluationCriteria: 'Look for knowledge of code splitting, lazy loading, image optimization, caching strategies, and performance metrics (Core Web Vitals).'
       }
     ]
   };
