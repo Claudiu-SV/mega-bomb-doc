@@ -22,6 +22,7 @@ export interface InterviewQuestion {
   category: 'technical' | 'behavioral' | 'situational' | 'experience';
   difficulty: 'easy' | 'medium' | 'hard';
   suggestedTime: number; // in minutes
+  evaluationCriteria?: string; // What to look for in a good answer
 }
 
 export interface GeneratedInterview {

@@ -12,7 +12,6 @@ interface BackendResume {
 interface BackendInterviewQuestion {
   id: string;
   text: string;
-  skill: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   category: 'Technical' | 'Behavioral' | 'Experience';
   evaluationCriteria: string;
@@ -100,7 +99,9 @@ export const adaptQuestionToFrontend = (backendQuestion: BackendInterviewQuestio
     question: backendQuestion.text,
     category: mapCategory(backendQuestion.category),
     difficulty: mapDifficulty(backendQuestion.difficulty),
-    suggestedTime: estimateSuggestedTime(backendQuestion.difficulty)
+    suggestedTime: estimateSuggestedTime(backendQuestion.difficulty),
+    // Add the missing fields from the backend response
+    evaluationCriteria: backendQuestion.evaluationCriteria
   };
 };
 

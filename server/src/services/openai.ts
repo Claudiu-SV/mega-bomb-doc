@@ -5,7 +5,8 @@ import dotenv from 'dotenv';
 import type { GeneratedInterview, JobRequirements } from '../types';
 
 // Load environment variables
-dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
+const envLocalPath = path.resolve(__dirname, '../../.env.local');
+dotenv.config({ path: envLocalPath });
 
 // Initialize OpenAI client
 let openai: OpenAI;
@@ -19,7 +20,7 @@ try {
     openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
-    console.log('OpenAI client initialized successfully with API key');
+    // OpenAI client initialized
   }
 } catch (error) {
   console.error('Error initializing OpenAI client:', error);
@@ -60,9 +61,9 @@ async function extractResumeText(resumePath: string): Promise<string> {
       
       let fileFound = false;
       for (const altPath of alternatives) {
-        console.log('Checking alternative path:', altPath);
+        // Check alternative path
         if (fs.existsSync(altPath)) {
-          console.log('File found at alternative path:', altPath);
+          // File found at alternative path
           fileFound = true;
           return getMockResumeContent(altPath);
         }
@@ -208,7 +209,7 @@ export async function generateInterviewQuestions(
       openai = new OpenAI({
         apiKey: process.env.OPENAI_API_KEY,
       });
-      console.log('OpenAI client initialized successfully');
+      // OpenAI client initialized
     } catch (error) {
       console.error('Failed to initialize OpenAI client:', error);
       return generateMockInterviewQuestions(jobRequirements);
@@ -220,47 +221,35 @@ export async function generateInterviewQuestions(
     
     // Prepare prompt for OpenAI
     const prompt = `
-      You are an expert technical interviewer. Your task is to generate a COMPLETE SET of interview questions based on the following information:
+      Generate interview questions based on these job requirements and resume:
+      JOB: ${JSON.stringify(jobRequirements)}
+      RESUME: ${resumeText}
       
-      JOB REQUIREMENTS:
-      ${JSON.stringify(jobRequirements)}
+      GENERATE EXACTLY:
+      - 2 behavioral questions
+      - 6 experience-based questions
+      - 12 technical questions (medium/hard difficulty)
       
-      CANDIDATE RESUME:
-      ${resumeText}
+      For each question include:
+      - Question text
+      - Difficulty (Easy/Medium/Hard)
+      - Category (Technical/Behavioral/Experience)
+      - Evaluation criteria
       
-      CRITICAL INSTRUCTION: You MUST generate the EXACT number of questions specified below. This is non-negotiable.
-      
-      YOU MUST GENERATE EXACTLY:
-      - 5 EASY technical questions
-      - 5 MEDIUM technical questions
-      - 5 HARD technical questions
-      - 5 behavioral questions
-      - 5 experience-based questions
-      
-      That's a total of 25 questions. Do not generate fewer questions under any circumstances.
-      
-      The technical questions must directly relate to the technologies and skills mentioned in both the job requirements and the candidate's resume.
-      
-      For each question, you must include:
-      1. The question text
-      2. What skill or qualification it tests
-      3. A difficulty rating (Easy, Medium, Hard)
-      4. The category (Technical, Behavioral, Experience)
-      5. What to look for in a good answer
-      
-      Format your response as a JSON object with the following structure:
+      Format as JSON:
       {
         "questions": [
           {
             "id": "1",
             "text": "Question text",
-            "skill": "Skill being tested",
             "difficulty": "Easy|Medium|Hard",
             "category": "Technical|Behavioral|Experience",
             "evaluationCriteria": "What to look for in a good answer"
           }
         ]
       }
+      
+      Sort order: behavioral, experience-based, technical.
     `;
     
     // Call OpenAI API with retry logic and error handling
@@ -271,17 +260,16 @@ export async function generateInterviewQuestions(
       response = await openai.chat.completions.create({
         model: "gpt-4.1-nano",
         messages: [
-          { role: "system", content: "You are an expert technical interviewer assistant. You must follow instructions exactly and completely." },
+          { role: "system", content: "You are an expert technical interviewer assistant. You must follow instructions exactly and completely. When generating questions, prioritize quality and depth, especially for technical questions." },
           { role: "user", content: prompt }
         ],
-        temperature: 0.8,
-        max_tokens: 4000,
+        temperature: 0.7,
+        max_tokens: 8000, // Reduced from 40000 to a more reasonable value for interview questions
         presence_penalty: 0.1,
         frequency_penalty: 0.1,
       });
       
-      const duration = Date.now() - startTime;
-      console.log(`OpenAI API call completed in ${duration}ms`);
+      // API call completed
     } catch (apiError: any) {
       console.error('OpenAI API error:', apiError);
       
@@ -311,27 +299,65 @@ export async function generateInterviewQuestions(
     // Extract JSON from the response
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      throw new Error('Failed to parse JSON from OpenAI response');
+      console.error('Could not find JSON object in response');
+      // Response received
+      throw new Error('Failed to parse JSON from OpenAI response: No JSON object found');
     }
     
     try {
-      const parsedResponse = JSON.parse(jsonMatch[0]);
+      // First, try standard JSON parsing
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(jsonMatch[0]);
+      } catch (parseError) {
+        // If standard parsing fails, attempt to fix common JSON issues
+        // Attempting to fix malformed JSON
+        
+        // Get the raw JSON string
+        let jsonString = jsonMatch[0];
+        
+        // Fix common JSON issues:
+        // 1. Replace single quotes with double quotes for property names
+        jsonString = jsonString.replace(/([{,])\s*'([^']+)'\s*:/g, '$1"$2":');
+        
+        // 2. Ensure property values that are strings use double quotes
+        jsonString = jsonString.replace(/:\s*'([^']+)'/g, ':"$1"');
+        
+        // 3. Fix trailing commas in arrays and objects
+        jsonString = jsonString.replace(/,\s*([\]}])/g, '$1');
+        
+        // Try parsing the fixed JSON
+        try {
+          parsedResponse = JSON.parse(jsonString);
+          // Successfully fixed and parsed JSON
+        } catch (secondError) {
+          console.error('Failed to fix malformed JSON:', secondError);
+          // JSON fix attempted
+          throw new Error(`Failed to parse JSON after repair attempts: ${(secondError as Error).message}`);
+        }
+      }
+      
+      // Validate the parsed response has the expected structure
+      if (!parsedResponse || !Array.isArray(parsedResponse.questions)) {
+        console.error('Invalid response structure:', parsedResponse);
+        throw new Error('Invalid response structure: missing questions array');
+      }
       
       // Format as GeneratedInterview
       const result = {
         questions: parsedResponse.questions.map((q: any) => ({
-          id: q.id,
-          text: q.text,
-          skill: q.skill,
-          difficulty: q.difficulty,
-          category: q.category,
-          evaluationCriteria: q.evaluationCriteria
+          id: q.id || String(Math.random().toString(36).substr(2, 9)),
+          text: q.text || q.question || '',
+          difficulty: q.difficulty || 'Medium',
+          category: q.category || 'Technical',
+          evaluationCriteria: q.evaluationCriteria || ''
         }))
       };
       
       return result;
     } catch (error) {
       const parseError = error as Error;
+      console.error('JSON parsing error details:', parseError);
       throw new Error(`Failed to parse JSON from OpenAI response: ${parseError.message}`);
     }
   } catch (error) {
@@ -352,7 +378,6 @@ function generateMockInterviewQuestions(jobRequirements: JobRequirements): Gener
       {
         id: '1',
         text: `Tell me about your experience with ${jobRequirements.requiredSkills[0] || 'web development'}.`,
-        skill: jobRequirements.requiredSkills[0] || 'Technical Skills',
         difficulty: 'Medium',
         category: 'Technical',
         evaluationCriteria: 'Look for depth of knowledge and practical experience.'
@@ -360,7 +385,6 @@ function generateMockInterviewQuestions(jobRequirements: JobRequirements): Gener
       {
         id: '2',
         text: 'Describe a challenging project you worked on and how you overcame obstacles.',
-        skill: 'Problem Solving',
         difficulty: 'Medium',
         category: 'Behavioral',
         evaluationCriteria: 'Assess problem-solving approach and resilience.'
@@ -368,7 +392,6 @@ function generateMockInterviewQuestions(jobRequirements: JobRequirements): Gener
       {
         id: '3',
         text: 'How do you stay updated with the latest technologies in your field?',
-        skill: 'Continuous Learning',
         difficulty: 'Easy',
         category: 'Behavioral',
         evaluationCriteria: 'Look for commitment to professional development.'
@@ -376,7 +399,6 @@ function generateMockInterviewQuestions(jobRequirements: JobRequirements): Gener
       {
         id: '4',
         text: `What experience do you have with ${jobRequirements.requiredSkills[1] || 'team collaboration'}?`,
-        skill: jobRequirements.requiredSkills[1] || 'Teamwork',
         difficulty: 'Medium',
         category: 'Experience',
         evaluationCriteria: 'Evaluate teamwork and collaboration skills.'
@@ -384,7 +406,6 @@ function generateMockInterviewQuestions(jobRequirements: JobRequirements): Gener
       {
         id: '5',
         text: 'Explain how you would approach a complex technical problem with limited documentation.',
-        skill: 'Technical Problem Solving',
         difficulty: 'Hard',
         category: 'Technical',
         evaluationCriteria: 'Assess analytical thinking and resourcefulness.'

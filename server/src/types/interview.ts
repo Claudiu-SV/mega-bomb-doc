@@ -1,7 +1,6 @@
 export interface InterviewQuestion {
   id: string;
   text: string;
-  skill: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
   category: 'Technical' | 'Behavioral' | 'Experience';
   evaluationCriteria: string;
