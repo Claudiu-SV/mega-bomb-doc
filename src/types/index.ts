@@ -1,11 +1,22 @@
+export type ExperienceLevel = 'entry' | 'mid' | 'senior' | 'executive' | '';
 export interface JobRequirements {
   id: string;
   title: string;
   description: string;
-  requiredSkills: string[];
-  experienceLevel: 'entry' | 'mid' | 'senior' | 'executive';
+  requiredSkills: string;
+  experienceLevel: ExperienceLevel;
   department: string;
   createdAt: Date;
+}
+
+export interface JobRequirementsFavorite {
+  id: string;
+  title: string;
+  description: string;
+  requiredSkills: string;
+  experienceLevel: ExperienceLevel;
+  department: string;
+  savedAt: Date;
 }
 
 export interface Resume {
