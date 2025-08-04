@@ -14,7 +14,7 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
     title: '',
     description: '',
     requiredSkills: '',
-    experienceLevel: '',
+    experienceLevel: 'entry', // Set default to entry level
     department: ''
   });
 
@@ -59,13 +59,10 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Simplify the requiredSkills transformation to avoid potential issues
     const requirements = {
       ...formData,
-      requiredSkills: formData.requiredSkills
-        .split(',')
-        .map(skill => skill.trim())
-        .filter(skill => skill.length > 0)
-        .join(', ')
+      requiredSkills: formData.requiredSkills.trim()
     };
     
     onSubmit(requirements);
