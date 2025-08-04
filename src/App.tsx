@@ -6,13 +6,8 @@ import ResumeUpload from './components/ResumeUpload';
 import InterviewQuestions from './components/InterviewQuestions';
 import LoadingSpinner from './components/LoadingSpinner';
 import { useAppStore } from './store/useAppStore';
-import { 
-  uploadResume, 
-  generateInterview, 
-  adaptResumeToFrontend, 
-  createInterviewFromBackend 
-} from './services/api';
-import type { JobRequirements, UploadProgress, Resume } from './types';
+import { useInterviewGeneration } from './hooks/useApi';
+import type { JobRequirements, UploadProgress } from './types';
 
 function App() {
   const {
@@ -21,15 +16,15 @@ function App() {
     resume,
     uploadProgress,
     generatedInterview,
-    isLoading,
     setCurrentStep,
     setJobRequirements,
     setResume,
     setUploadProgress,
     setGeneratedInterview,
-    setIsLoading,
     resetApp
   } = useAppStore();
+
+  const interviewGeneration = useInterviewGeneration();
 
   const handleJobRequirementsSubmit = (requirements: Omit<JobRequirements, 'id' | 'createdAt'>) => {
     const jobReq: JobRequirements = {
@@ -42,8 +37,8 @@ function App() {
   };
 
   const handleResumeUpload = async (file: File) => {
-    setIsLoading(true);
-    
+    if (!jobRequirements) return;
+
     // Initialize upload progress
     const initialProgress: UploadProgress = {
       fileName: file.name,
@@ -51,61 +46,57 @@ function App() {
       status: 'uploading'
     };
     setUploadProgress(initialProgress);
+    setCurrentStep('generating');
 
     try {
-      // Upload resume using API service
-      const resumeData = await uploadResume(file, (progressPercent) => {
-        const currentProgress = uploadProgress;
-        if (currentProgress) {
-          setUploadProgress({ ...currentProgress, progress: progressPercent });
+      const { resume, interview } = await interviewGeneration.generateFullInterview(
+        file,
+        jobRequirements,
+        (progressPercent) => {
+          // Update progress directly with current state
+          setUploadProgress({
+            fileName: file.name,
+            progress: progressPercent,
+            status: 'uploading'
+          });
         }
-      });
-      
-      // Convert backend resume format to frontend format
-      const resume = adaptResumeToFrontend(resumeData, file);
+      );
+
+      // Update state with results
       setResume(resume);
-      
-      if (uploadProgress) {
-        setUploadProgress({ ...uploadProgress, progress: 100, status: 'completed' });
-      }
-      setCurrentStep('generating');
-      
-      // Generate interview questions
-      handleGenerateInterview(resume);
+      setGeneratedInterview(interview);
+      setUploadProgress({
+        fileName: file.name,
+        progress: 100,
+        status: 'completed'
+      });
+      setCurrentStep('results');
     } catch (error) {
-      console.error('[APP] Error uploading resume:', error);
-      if (uploadProgress) {
-        setUploadProgress({ ...uploadProgress, status: 'error' });
-      }
-    } finally {
-      setIsLoading(false);
+      // Error handling is done by React Query hooks with toast notifications
+      setUploadProgress({
+        fileName: file.name,
+        progress: 0,
+        status: 'error'
+      });
+      setCurrentStep('resume-upload');
     }
   };
 
-  const handleGenerateInterview = async (resumeParam?: Resume) => {
-    
-    // Use the passed resume parameter if available, otherwise fall back to state
-    const resumeToUse = resumeParam || resume;
-    
-    if (!jobRequirements || !resumeToUse) {
-      return;
-    }
+  const handleGenerateInterview = async () => {
+    if (!jobRequirements || !resume) return;
     
     setCurrentStep('generating');
-    setIsLoading(true);
-
+    
     try {
-      // Generate interview questions using API service
-      const interviewData = await generateInterview(jobRequirements, resumeToUse?.content || '');
+      const { interview } = await interviewGeneration.generateFullInterview(
+        new File([], resume.fileName), // Dummy file since resume is already uploaded
+        jobRequirements
+      );
       
-      // Create interview object from backend data using adapter
-      const interview = createInterviewFromBackend(interviewData, jobRequirements, resumeToUse);
       setGeneratedInterview(interview);
       setCurrentStep('results');
     } catch (error) {
-      console.error('[APP] Error generating interview:', error);
-    } finally {
-      setIsLoading(false);
+      setCurrentStep('resume-upload');
     }
   };
 
@@ -124,7 +115,7 @@ function App() {
         return (
           <JobRequirementsForm
             onSubmit={handleJobRequirementsSubmit}
-            isLoading={isLoading}
+            isLoading={interviewGeneration.isLoading}
           />
         );
       
@@ -144,14 +135,14 @@ function App() {
             <ResumeUpload
               onUpload={handleResumeUpload}
               uploadProgress={uploadProgress || undefined}
-              isLoading={isLoading}
+              isLoading={interviewGeneration.isLoading}
               uploadedResume={resume || undefined}
             />
             {resume && (
               <div className="flex justify-end">
                 <button
-                  onClick={() => handleGenerateInterview(resume)}
-                  disabled={isLoading}
+                  onClick={handleGenerateInterview}
+                  disabled={interviewGeneration.isLoading}
                   className="px-6 py-2 bg-green-600 text-white font-medium rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Generate Interview Questions
