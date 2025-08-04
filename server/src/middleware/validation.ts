@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
+
 import { AppError } from './errorHandler';
-import { JobRequirements } from '../types/interview';
 
 /**
  * Validate job requirements request body
@@ -19,8 +19,10 @@ export const validateJobRequirements = (req: Request, res: Response, next: NextF
   if (!jobRequirements.description || jobRequirements.description.trim() === '') {
     return next(new AppError('Job description is required', 400));
   }
+
+  const jobRequirementsArray = jobRequirements.requiredSkills.split(',').map((s: string) => s.trim()).filter((s: string) => s.length > 0);
   
-  if (!jobRequirements.requiredSkills || !Array.isArray(jobRequirements.requiredSkills) || jobRequirements.requiredSkills.length === 0) {
+  if (!jobRequirements.requiredSkills || jobRequirementsArray.length === 0) {
     return next(new AppError('At least one required skill must be specified', 400));
   }
   

@@ -1,3 +1,4 @@
+export type ExperienceLevel = 'entry' | 'mid' | 'senior' | 'executive' | '';
 export interface InterviewQuestion {
   id: string;
   text: string;
@@ -15,7 +16,7 @@ export interface JobRequirements {
   description: string;
   requiredSkills: string[];
   preferredSkills?: string[];
-  experienceLevel?: string;
+  experienceLevel?: ExperienceLevel;
   education?: string;
 }
 

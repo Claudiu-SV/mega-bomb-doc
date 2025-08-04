@@ -1,5 +1,6 @@
+import type { GeneratedInterview, InterviewQuestion, JobRequirements, Resume } from '../types';
+
 import axios from 'axios';
-import type { JobRequirements, Resume, GeneratedInterview, InterviewQuestion } from '../types';
 
 // Backend types that differ from frontend types
 interface BackendResume {
@@ -39,23 +40,19 @@ export const uploadResume = async (file: File, onProgress?: (progress: number) =
   const formData = new FormData();
   formData.append('resume', file);
   
-  try {
-    const response = await api.post('/upload/resume', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      onUploadProgress: (progressEvent) => {
-        if (progressEvent.total && onProgress) {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          onProgress(percentCompleted);
-        }
-      },
-    });
-    
-    return response.data.file;
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.post('/upload/resume', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    onUploadProgress: (progressEvent) => {
+      if (progressEvent.total && onProgress) {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        onProgress(percentCompleted);
+      }
+    },
+  });
+  
+  return response.data.file;
 };
 
 /**
@@ -78,16 +75,12 @@ export const generateInterview = async (
   jobRequirements: JobRequirements,
   resumePath: string
 ): Promise<BackendGeneratedInterview> => {
-  try {
-    const response = await api.post('/interview/generate', {
-      jobRequirements,
-      resumePath,
-    });
-    
-    return response.data.interview;
-  } catch (error) {
-    throw error;
-  }
+  const response = await api.post('/interview/generate', {
+    jobRequirements,
+    resumePath,
+  });
+  
+  return response.data.interview;
 };
 
 /**
