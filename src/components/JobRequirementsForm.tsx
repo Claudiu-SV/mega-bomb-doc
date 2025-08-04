@@ -1,5 +1,8 @@
 import type { JobRequirements, JobRequirementsFavorite } from '../types';
 import React, { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { jobRequirementsSchema, type JobRequirementsFormData } from '../schemas/jobRequirementsSchema';
 
 interface JobRequirementsFormProps {
   onSubmit: (requirements: Omit<JobRequirements, 'id' | 'createdAt'>) => void;
@@ -10,13 +13,26 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
   onSubmit, 
   isLoading = false 
 }) => {
-  const [formData, setFormData] = useState<Omit<JobRequirements, 'id' | 'createdAt'>>({
-    title: '',
-    description: '',
-    requiredSkills: '',
-    experienceLevel: 'entry', // Set default to entry level
-    department: ''
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid },
+    watch,
+    reset,
+    setValue
+  } = useForm<JobRequirementsFormData>({
+    resolver: zodResolver(jobRequirementsSchema),
+    defaultValues: {
+      title: '',
+      description: '',
+      requiredSkills: '',
+      experienceLevel: 'entry',
+      department: ''
+    },
+    mode: 'onChange'
   });
+
+  const watchedValues = watch();
 
   const [favorites, setFavorites] = useState<JobRequirementsFavorite[]>([]);
   const [dialog, setDialog] = useState<{ isOpen: boolean; title: string; message: string; type: 'success' | 'error' | 'warning' }>({
@@ -27,12 +43,12 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
   });
 
   // Check if all mandatory fields are filled
-  const isSaveDisabled = !formData.title.trim() || !formData.department.trim() || 
-    !formData.experienceLevel || !formData.requiredSkills.trim() || !formData.description.trim();
+  const isSaveDisabled = !isValid || !watchedValues.title?.trim() || !watchedValues.department?.trim() || 
+    !watchedValues.experienceLevel || !watchedValues.requiredSkills?.trim() || !watchedValues.description?.trim();
 
   // Check if any field has content (for Clear button)
-  const isClearDisabled = !formData.title.trim() && !formData.department.trim() && 
-    !formData.experienceLevel && !formData.requiredSkills.trim() && !formData.description.trim();
+  const isClearDisabled = !watchedValues.title?.trim() && !watchedValues.department?.trim() && 
+    !watchedValues.experienceLevel && !watchedValues.requiredSkills?.trim() && !watchedValues.description?.trim();
 
   // Helper function to show dialog
   const showDialog = (title: string, message: string, type: 'success' | 'error' | 'warning' = 'success') => {
@@ -56,34 +72,26 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
     }
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Simplify the requiredSkills transformation to avoid potential issues
+  const onFormSubmit = (data: JobRequirementsFormData) => {
     const requirements = {
-      ...formData,
-      requiredSkills: formData.requiredSkills.trim()
+      ...data,
+      requiredSkills: data.requiredSkills.trim()
     };
     
     onSubmit(requirements);
   };
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  // No longer needed as React Hook Form handles input changes
 
   const handleSaveAsFavorite = () => {
-    if (!formData.title.trim()) {
+    if (!watchedValues.title?.trim()) {
       showDialog('Missing Information', 'Please enter a job title before saving as favorite.', 'warning');
       return;
     }
 
     // Check for duplicate titles (case-insensitive)
     const titleExists = favorites.some(
-      favorite => favorite.title.toLowerCase() === formData.title.trim().toLowerCase()
+      favorite => favorite.title.toLowerCase() === watchedValues.title!.trim().toLowerCase()
     );
 
     if (titleExists) {
@@ -93,15 +101,15 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
 
     const newFavorite: JobRequirementsFavorite = {
       id: Date.now().toString(),
-      title: formData.title,
-      description: formData.description,
-      requiredSkills: formData.requiredSkills
+      title: watchedValues.title,
+      description: watchedValues.description,
+      requiredSkills: watchedValues.requiredSkills
         .split(',')
-        .map(skill => skill.trim())
-        .filter(skill => skill.length > 0)
+        .map((skill: string) => skill.trim())
+        .filter((skill: string) => skill.length > 0)
         .join(', '),
-      experienceLevel: formData.experienceLevel,
-      department: formData.department,
+      experienceLevel: watchedValues.experienceLevel,
+      department: watchedValues.department,
       savedAt: new Date()
     };
 
@@ -118,13 +126,11 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
   };
 
   const handleLoadFavorite = (favorite: JobRequirementsFavorite) => {
-    setFormData({
-      title: favorite.title,
-      description: favorite.description,
-      requiredSkills: favorite.requiredSkills,
-      experienceLevel: favorite.experienceLevel,
-      department: favorite.department
-    });
+    setValue('title', favorite.title);
+    setValue('description', favorite.description);
+    setValue('requiredSkills', favorite.requiredSkills);
+    setValue('experienceLevel', favorite.experienceLevel as 'entry' | 'mid' | 'senior' | 'executive');
+    setValue('department', favorite.department);
   };
 
   const handleDeleteFavorite = (favoriteId: string) => {
@@ -139,11 +145,11 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
   };
 
   const handleClear = () => {
-    setFormData({
+    reset({
       title: '',
       description: '',
       requiredSkills: '',
-      experienceLevel: '',
+      experienceLevel: 'entry',
       department: ''
     });
   };
@@ -187,7 +193,7 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
         </div>
       )}
       
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 sm:space-y-6">
         {/* Job Title */}
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
@@ -196,13 +202,15 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
           <input
             type="text"
             id="title"
-            name="title"
-            value={formData.title}
-            onChange={handleInputChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            {...register('title')}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.title ? 'border-red-300' : 'border-gray-300'
+            }`}
             placeholder="e.g., Senior Software Engineer"
           />
+          {errors.title && (
+            <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
+          )}
         </div>
 
         {/* Department */}
@@ -213,13 +221,15 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
           <input
             type="text"
             id="department"
-            name="department"
-            value={formData.department}
-            onChange={handleInputChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            {...register('department')}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.department ? 'border-red-300' : 'border-gray-300'
+            }`}
             placeholder="e.g., Engineering, Marketing, Sales"
           />
+          {errors.department && (
+            <p className="mt-1 text-sm text-red-600">{errors.department.message}</p>
+          )}
         </div>
 
         {/* Experience Level */}
@@ -229,17 +239,19 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
           </label>
           <select
             id="experienceLevel"
-            name="experienceLevel"
-            value={formData.experienceLevel}
-            onChange={handleInputChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            {...register('experienceLevel')}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.experienceLevel ? 'border-red-300' : 'border-gray-300'
+            }`}
           >
             <option value="entry">Entry Level (0-2 years)</option>
             <option value="mid">Mid Level (3-5 years)</option>
             <option value="senior">Senior Level (6-10 years)</option>
             <option value="executive">Executive Level (10+ years)</option>
           </select>
+          {errors.experienceLevel && (
+            <p className="mt-1 text-sm text-red-600">{errors.experienceLevel.message}</p>
+          )}
         </div>
 
         {/* Required Skills */}
@@ -250,13 +262,15 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
           <input
             type="text"
             id="requiredSkills"
-            name="requiredSkills"
-            value={formData.requiredSkills}
-            onChange={handleInputChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            {...register('requiredSkills')}
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.requiredSkills ? 'border-red-300' : 'border-gray-300'
+            }`}
             placeholder="e.g., React, TypeScript, Node.js, AWS (comma-separated)"
           />
+          {errors.requiredSkills && (
+            <p className="mt-1 text-sm text-red-600">{errors.requiredSkills.message}</p>
+          )}
           <p className="mt-1 text-sm text-gray-500">
             Separate skills with commas
           </p>
@@ -269,14 +283,16 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
           </label>
           <textarea
             id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            required
+            {...register('description')}
             rows={6}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              errors.description ? 'border-red-300' : 'border-gray-300'
+            }`}
             placeholder="Describe the role, responsibilities, and what you're looking for in a candidate..."
           />
+          {errors.description && (
+            <p className="mt-1 text-sm text-red-600">{errors.description.message}</p>
+          )}
         </div>
 
         {/* Action Buttons */}
