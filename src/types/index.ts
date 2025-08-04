@@ -34,6 +34,8 @@ export interface InterviewQuestion {
   difficulty: 'easy' | 'medium' | 'hard';
   suggestedTime: number; // in minutes
   evaluationCriteria?: string; // What to look for in a good answer
+  rating: number;
+  comment?: string;
 }
 
 export interface GeneratedInterview {

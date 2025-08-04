@@ -94,7 +94,9 @@ export const adaptQuestionToFrontend = (backendQuestion: BackendInterviewQuestio
     difficulty: mapDifficulty(backendQuestion.difficulty),
     suggestedTime: estimateSuggestedTime(backendQuestion.difficulty),
     // Add the missing fields from the backend response
-    evaluationCriteria: backendQuestion.evaluationCriteria
+    evaluationCriteria: backendQuestion.evaluationCriteria,
+    rating: 0,
+    comment: undefined,
   };
 };
 
