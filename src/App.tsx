@@ -5,7 +5,7 @@ import JobRequirementsForm from './components/JobRequirementsForm';
 import ResumeUpload from './components/ResumeUpload';
 import InterviewQuestions from './components/InterviewQuestions';
 import LoadingSpinner from './components/LoadingSpinner';
-import { useAppStore } from './store/useAppStore';
+import { useAppStore } from './stores/useAppStore';
 import { useInterviewGeneration } from './hooks/useApi';
 import type { JobRequirements, UploadProgress } from './types';
 
