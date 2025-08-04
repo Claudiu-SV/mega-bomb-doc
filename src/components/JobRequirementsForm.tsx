@@ -164,14 +164,14 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
       {/* Saved Favorites */}
       {favorites.length > 0 && (
         <div className="mb-6">
-          <h3 className="text-md font-medium text-gray-700 mb-3">Saved Favorites</h3>
-          <div className="flex flex-wrap gap-2">
+          <h3 className="text-md font-medium text-gray-700 mb-4">Saved Favorites</h3>
+          <div className="flex flex-wrap gap-3">
             {favorites.map((favorite) => (
-              <div key={favorite.id} className="relative">
+              <div key={favorite.id} className="relative group">
                 <button
                   type="button"
                   onClick={() => handleLoadFavorite(favorite)}
-                  className="pl-3 pr-8 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 hover:text-gray-900 rounded-md transition-colors border border-gray-300"
+                  className="inline-flex items-center pl-4 pr-10 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-full hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
                   title={`Load: ${favorite.title}`}
                 >
                   {favorite.title}
@@ -182,10 +182,12 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
                     e.stopPropagation();
                     handleDeleteFavorite(favorite.id);
                   }}
-                  className="absolute right-1 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-300 rounded-full transition-colors text-xs"
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 w-6 h-6 flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-full transition-all duration-200"
                   title="Delete favorite"
                 >
-                  ×
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
             ))}
@@ -203,7 +205,7 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
             type="text"
             id="title"
             {...register('title')}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-4 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
               errors.title ? 'border-red-300' : 'border-gray-300'
             }`}
             placeholder="e.g., Senior Software Engineer"
@@ -222,7 +224,7 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
             type="text"
             id="department"
             {...register('department')}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-4 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
               errors.department ? 'border-red-300' : 'border-gray-300'
             }`}
             placeholder="e.g., Engineering, Marketing, Sales"
@@ -234,23 +236,62 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
 
         {/* Experience Level */}
         <div>
-          <label htmlFor="experienceLevel" className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 mb-3">
             Experience Level *
           </label>
-          <select
-            id="experienceLevel"
-            {...register('experienceLevel')}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.experienceLevel ? 'border-red-300' : 'border-gray-300'
-            }`}
-          >
-            <option value="entry">Entry Level (0-2 years)</option>
-            <option value="mid">Mid Level (3-5 years)</option>
-            <option value="senior">Senior Level (6-10 years)</option>
-            <option value="executive">Executive Level (10+ years)</option>
-          </select>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { value: 'entry', label: 'Entry Level', subtitle: '0-2 years', icon: '🌱' },
+              { value: 'mid', label: 'Mid Level', subtitle: '3-5 years', icon: '🚀' },
+              { value: 'senior', label: 'Senior Level', subtitle: '6-10 years', icon: '⭐' },
+              { value: 'executive', label: 'Executive Level', subtitle: '10+ years', icon: '👑' }
+            ].map((level) => {
+              const isSelected = watchedValues.experienceLevel === level.value;
+              return (
+                <label
+                  key={level.value}
+                  className={`relative cursor-pointer rounded-xl border-2 p-4 transition-all duration-200 hover:shadow-md ${
+                    isSelected
+                      ? 'border-blue-500 bg-blue-50 shadow-md'
+                      : errors.experienceLevel
+                      ? 'border-red-300 bg-white hover:border-red-400'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    value={level.value}
+                    {...register('experienceLevel')}
+                    className="sr-only"
+                  />
+                  <div className="flex flex-col items-center text-center">
+                    <div className="text-2xl mb-2">{level.icon}</div>
+                    <div className={`font-medium text-sm ${
+                      isSelected ? 'text-blue-700' : 'text-gray-900'
+                    }`}>
+                      {level.label}
+                    </div>
+                    <div className={`text-xs mt-1 ${
+                      isSelected ? 'text-blue-600' : 'text-gray-500'
+                    }`}>
+                      {level.subtitle}
+                    </div>
+                  </div>
+                  {isSelected && (
+                    <div className="absolute top-2 right-2">
+                      <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                        <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    </div>
+                  )}
+                </label>
+              );
+            })}
+          </div>
           {errors.experienceLevel && (
-            <p className="mt-1 text-sm text-red-600">{errors.experienceLevel.message}</p>
+            <p className="mt-2 text-sm text-red-600">{errors.experienceLevel.message}</p>
           )}
         </div>
 
@@ -263,7 +304,7 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
             type="text"
             id="requiredSkills"
             {...register('requiredSkills')}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-4 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
               errors.requiredSkills ? 'border-red-300' : 'border-gray-300'
             }`}
             placeholder="e.g., React, TypeScript, Node.js, AWS (comma-separated)"
@@ -285,7 +326,7 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
             id="description"
             {...register('description')}
             rows={6}
-            className={`w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+            className={`w-full px-4 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none ${
               errors.description ? 'border-red-300' : 'border-gray-300'
             }`}
             placeholder="Describe the role, responsibilities, and what you're looking for in a candidate..."
@@ -301,7 +342,7 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
             type="button"
             onClick={handleClear}
             disabled={isClearDisabled}
-            className="px-6 py-2 bg-gray-600 text-white font-medium rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-3 bg-gray-600 text-white font-medium rounded-full shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Clear
           </button>
@@ -310,14 +351,14 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
               type="button"
               onClick={handleSaveAsFavorite}
               disabled={isSaveDisabled}
-              className="px-6 py-2 bg-blue-600 text-white font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               Save as Favorite
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="px-6 py-2 bg-blue-600 text-white font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isLoading ? 'Processing...' : 'Continue to Resume Upload'}
             </button>
@@ -344,7 +385,7 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
           <div className="flex justify-end">
             <button
               onClick={closeDialog}
-              className="px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              className="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
             >
               OK
             </button>
