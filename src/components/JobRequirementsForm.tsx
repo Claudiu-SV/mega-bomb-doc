@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { jobRequirementsSchema, type JobRequirementsFormData } from '../schemas/jobRequirementsSchema';
+import { itJobs } from '../data/itJobs';
 
 interface JobRequirementsFormProps {
   onSubmit: (requirements: Omit<JobRequirements, 'id' | 'createdAt'>) => void;
@@ -144,6 +145,16 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
     }
   };
 
+  const handleJobTitleSelect = (selectedTitle: string) => {
+    setValue('title', selectedTitle);
+    
+    // Find the corresponding job description and auto-fill it
+    const selectedJob = itJobs.find(job => job.title === selectedTitle);
+    if (selectedJob) {
+      setValue('description', selectedJob.description);
+    }
+  };
+
   const handleClear = () => {
     reset({
       title: '',
@@ -196,42 +207,59 @@ const JobRequirementsForm: React.FC<JobRequirementsFormProps> = ({
       )}
       
       <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 sm:space-y-6">
-        {/* Job Title */}
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-            Job Title *
-          </label>
-          <input
-            type="text"
-            id="title"
-            {...register('title')}
-            className={`w-full px-4 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-              errors.title ? 'border-red-300' : 'border-gray-300'
-            }`}
-            placeholder="e.g., Senior Software Engineer"
-          />
-          {errors.title && (
-            <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
-          )}
-        </div>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 md:gap-6">
+          <div className="md:col-span-3">
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+              Job Title *
+            </label>
+            <div className="space-y-3">
+              {/* Dropdown for predefined IT jobs */}
+              <select
+                id="jobTitleSelect"
+                value={itJobs.find(job => job.title === watchedValues.title)?.title || ''}
+                onChange={(e) => {
+                  const selectedValue = e.target.value;
+                  if (selectedValue) {
+                    handleJobTitleSelect(selectedValue);
+                  }
+                }}
+                className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white"
+                style={{
+                  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                  backgroundPosition: 'right 0.75rem center',
+                  backgroundRepeat: 'no-repeat',
+                  backgroundSize: '1.5em 1.5em'
+                }}
+              >
+                {itJobs.map((job) => (
+                  <option key={job.title} value={job.title}>
+                    {job.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {errors.title && (
+              <p className="mt-1 text-sm text-red-600">{errors.title.message}</p>
+            )}
+          </div>
 
-        {/* Department */}
-        <div>
-          <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">
-            Department *
-          </label>
-          <input
-            type="text"
-            id="department"
-            {...register('department')}
-            className={`w-full px-4 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
-              errors.department ? 'border-red-300' : 'border-gray-300'
-            }`}
-            placeholder="e.g., Engineering, Marketing, Sales"
-          />
-          {errors.department && (
-            <p className="mt-1 text-sm text-red-600">{errors.department.message}</p>
-          )}
+          <div className="md:col-span-2">
+            <label htmlFor="department" className="block text-sm font-medium text-gray-700 mb-2">
+              Department *
+            </label>
+            <input
+              type="text"
+              id="department"
+              {...register('department')}
+              className={`w-full px-4 py-3 border rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                errors.department ? 'border-red-300' : 'border-gray-300'
+              }`}
+              placeholder="e.g., Engineering, Marketing, Sales"
+            />
+            {errors.department && (
+              <p className="mt-1 text-sm text-red-600">{errors.department.message}</p>
+            )}
+          </div>
         </div>
 
         {/* Experience Level */}
