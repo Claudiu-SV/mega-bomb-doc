@@ -1,13 +1,14 @@
+import type { JobRequirements, UploadProgress } from './types';
 
-import Layout from './components/Layout';
-import Steps from './components/Steps';
-import JobRequirementsForm from './components/JobRequirementsForm';
-import ResumeUpload from './components/ResumeUpload';
 import InterviewQuestions from './components/InterviewQuestions';
+import JobRequirementsForm from './components/JobRequirementsForm';
+import Layout from './components/Layout';
 import LoadingSpinner from './components/LoadingSpinner';
+import ResumeUpload from './components/ResumeUpload';
+import Steps from './components/Steps';
+import { exportInterviewToPDF } from './utils/pdfExport';
 import { useAppStore } from './stores/useAppStore';
 import { useInterviewGeneration } from './hooks/useApi';
-import type { JobRequirements, UploadProgress } from './types';
 
 function App() {
   const {
@@ -72,6 +73,7 @@ function App() {
       });
       setCurrentStep('results');
     } catch (error) {
+      console.error('[APP] Error uploading resume:', error);
       // Error handling is done by React Query hooks with toast notifications
       setUploadProgress({
         fileName: file.name,
@@ -96,6 +98,7 @@ function App() {
       setGeneratedInterview(interview);
       setCurrentStep('results');
     } catch (error) {
+      console.error('[APP] Error generating interview:', error);
       setCurrentStep('resume-upload');
     }
   };
@@ -105,8 +108,9 @@ function App() {
   };
 
   const handleExport = () => {
-    // In real implementation, this would generate and download a PDF
-    alert('Export functionality will be implemented with backend integration.');
+    if (generatedInterview) {
+      exportInterviewToPDF(generatedInterview);
+    }
   };
 
   const renderCurrentStep = () => {
