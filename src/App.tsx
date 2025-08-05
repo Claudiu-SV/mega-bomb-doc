@@ -1,5 +1,6 @@
 import type { JobRequirements, UploadProgress } from './types';
 
+import Dialog from './components/Dialog';
 import InterviewQuestions from './components/InterviewQuestions';
 import JobRequirementsForm from './components/JobRequirementsForm';
 import Layout from './components/Layout';
@@ -8,7 +9,9 @@ import ResumeUpload from './components/ResumeUpload';
 import Steps from './components/Steps';
 import { exportInterviewToPDF } from './utils/pdfExport';
 import { useAppStore } from './stores/useAppStore';
+import { useDialog } from './hooks/useDialog';
 import { useInterviewGeneration } from './hooks/useApi';
+import { useInterviewStore } from './stores/useInterviewStore';
 
 function App() {
   const {
@@ -26,6 +29,8 @@ function App() {
   } = useAppStore();
 
   const interviewGeneration = useInterviewGeneration();
+  const { dialog, showDialog, closeDialog } = useDialog();
+  const { interview } = useInterviewStore();
 
   const handleJobRequirementsSubmit = (requirements: Omit<JobRequirements, 'id' | 'createdAt'>) => {
     const jobReq: JobRequirements = {
@@ -108,8 +113,8 @@ function App() {
   };
 
   const handleExport = () => {
-    if (generatedInterview) {
-      exportInterviewToPDF(generatedInterview);
+    if (interview) {
+      exportInterviewToPDF(interview, showDialog);
     }
   };
 
@@ -189,6 +194,15 @@ function App() {
     <Layout>
       <Steps />
       {renderCurrentStep()}
+      
+      {/* Global Dialog */}
+      <Dialog
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        type={dialog.type}
+        onClose={closeDialog}
+      />
     </Layout>
   );
 }

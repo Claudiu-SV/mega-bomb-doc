@@ -1,6 +1,7 @@
-import { create } from 'zustand';
 import type { GeneratedInterview, InterviewQuestion } from '../types';
 import { formatTime, getCategoryColor, getDifficultyColor } from '../utils/interviewUtils';
+
+import { create } from 'zustand';
 
 interface InterviewStore {
   // Data
@@ -20,6 +21,8 @@ interface InterviewStore {
   setSelectedDifficulty: (difficulty: string) => void;
   setInterview: (interview: GeneratedInterview) => void;
   startOver: () => void;
+  updateQuestionRating: (questionId: string, rating: number) => void;
+  updateQuestionComment: (questionId: string, comment: string) => void;
   
   // Utility functions (re-exported from utils)
   formatTime: typeof formatTime;
@@ -55,6 +58,32 @@ export const useInterviewStore = create<InterviewStore>((set, get) => ({
   setSelectedDifficulty: (difficulty: string) => set({ selectedDifficulty: difficulty }),
   setInterview: (interview: GeneratedInterview) => set({ interview }),
   startOver: () => set({ interview: null }),
+  
+  updateQuestionRating: (questionId: string, rating: number) => {
+    const { interview } = get();
+    if (!interview) return;
+    
+    const updatedQuestions = interview.questions.map(question =>
+      question.id === questionId
+        ? { ...question, rating }
+        : question
+    );
+    
+    set({ interview: { ...interview, questions: updatedQuestions } });
+  },
+  
+  updateQuestionComment: (questionId: string, comment: string) => {
+    const { interview } = get();
+    if (!interview) return;
+    
+    const updatedQuestions = interview.questions.map(question =>
+      question.id === questionId
+        ? { ...question, comment }
+        : question
+    );
+    
+    set({ interview: { ...interview, questions: updatedQuestions } });
+  },
   
   // Utility functions imported from utils
   formatTime,

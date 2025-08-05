@@ -1,6 +1,5 @@
-import React from 'react';
 import type { InterviewQuestion } from '../../types';
-import type { InterviewQuestion as GeneratedInterviewQuestion } from '../../../server/src/types/interview';
+import React from 'react';
 import { useInterviewStore } from '../../stores/useInterviewStore';
 
 interface QuestionsListProps {
@@ -10,21 +9,36 @@ interface QuestionsListProps {
 const QuestionsList: React.FC<QuestionsListProps> = ({
   filteredQuestions
 }) => {
-  // Get utility functions from the store
-  const { getCategoryColor, getDifficultyColor } = useInterviewStore();
+  const { getCategoryColor, getDifficultyColor, updateQuestionRating, updateQuestionComment } = useInterviewStore();
+
+  // Calculate total rating (average of all rated questions)
+  const calculateTotalRating = () => {
+    const ratedQuestions = filteredQuestions.filter(question => question.rating && question.rating > 0);
+    if (ratedQuestions.length === 0) return null;
+    
+    const totalRating = ratedQuestions.reduce((sum, question) => sum + question.rating, 0);
+    return {
+      average: totalRating / ratedQuestions.length,
+      count: ratedQuestions.length,
+      total: filteredQuestions.length
+    };
+  };
+
+  const totalRating = calculateTotalRating();
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {filteredQuestions.map((question, index) => (
         <div
           key={question.id}
-          className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow"
+          className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 hover:shadow-md transition-shadow"
         >
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <span className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
-                {index + 1}
-              </span>
-              <div className="flex space-x-2">
+          <div className="flex flex-col md:flex-row md:items-start gap-3 md:gap-4">
+            <div className="flex items-start gap-3 md:flex-col md:items-center md:gap-2 md:w-20 flex-shrink-0">
+              <div className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-semibold">
+                Q{index + 1}
+              </div>
+              <div className="flex gap-2 md:flex-col md:gap-1 md:items-center">
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(question.category)}`}>
                   {question.category}
                 </span>
@@ -33,57 +47,58 @@ const QuestionsList: React.FC<QuestionsListProps> = ({
                 </span>
               </div>
             </div>
-            <div className="flex items-center text-sm text-gray-500">
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              {question.suggestedTime}m
-            </div>
-          </div>
-
-          <div className="md:ml-11">
-            <p className="text-gray-900 text-lg leading-relaxed">
-              {(question as unknown as GeneratedInterviewQuestion).text || question.question}
-            </p>
-
-            {(question as unknown as GeneratedInterviewQuestion).evaluationCriteria && (
-              <div className="mt-2 p-3 bg-gray-50 rounded-md border border-gray-100">
-                <h4 className="text-sm font-medium text-gray-700 mb-1">Evaluation Criteria:</h4>
-                <p className="text-sm text-gray-600">{(question as unknown as GeneratedInterviewQuestion).evaluationCriteria}</p>
+            
+            <div className="flex-1 min-w-0">
+              <div className="mb-2 text-sm text-gray-500">
+                Estimated time: {question.suggestedTime}m
               </div>
-            )}
-          </div>
 
+              <p className="text-gray-900 text-lg leading-relaxed mb-4">
+                {question.question}
+              </p>
 
-          <div className="md:ml-11">
-            <div className="mt-4">
-              <label htmlFor={`rating-${question.id}`} className="block text-sm font-medium text-gray-700 mb-1">
-                Rating:
-              </label>
-              <select
-                id={`rating-${question.id}`}
-                className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select rating</option>
-                <option value="1">1 - Poor</option>
-                <option value="2">2 - Fair</option>
-                <option value="3">3 - Good</option>
-                <option value="4">4 - Very Good</option>
-                <option value="5">5 - Excellent</option>
-              </select>
+              {question.evaluationCriteria && (
+                <div className="mt-2 p-3 bg-gray-50 rounded-md border border-gray-100 mb-4">
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">Evaluation Criteria:</h4>
+                  <p className="text-sm text-gray-600">{question.evaluationCriteria}</p>
+                </div>
+              )}
+
+              {/* Rating Section */}
+              <div className="mt-4">
+                <label htmlFor={`rating-${question.id}`} className="block text-sm font-medium text-gray-700 mb-1">
+                  Rating:
+                </label>
+                <select
+                  id={`rating-${question.id}`}
+                  value={question.rating || ''}
+                  onChange={(e) => updateQuestionRating(question.id, parseInt(e.target.value) || 0)}
+                  className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select rating</option>
+                  <option value="1">1 - Poor</option>
+                  <option value="2">2 - Fair</option>
+                  <option value="3">3 - Good</option>
+                  <option value="4">4 - Very Good</option>
+                  <option value="5">5 - Excellent</option>
+                </select>
+              </div>
+
+              {/* Comment Section */}
+              <div className="mt-4">
+                <label htmlFor={`comment-${question.id}`} className="block text-sm font-medium text-gray-700">
+                  Comments:
+                </label>
+                <textarea
+                  id={`comment-${question.id}`}
+                  rows={3}
+                  value={question.comment || ''}
+                  onChange={(e) => updateQuestionComment(question.id, e.target.value)}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
+                  placeholder="Add your comments here..."
+                />
+              </div>
             </div>
-            <div className="mt-4">
-              <label htmlFor={`comment-${question.id}`} className="block text-sm font-medium text-gray-700">
-                Comments:
-              </label>
-              <textarea
-                id={`comment-${question.id}`}
-                rows={3}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-                placeholder="Add your comments here..."
-              ></textarea>
-            </div>
-
           </div>
         </div>
       ))}
@@ -94,6 +109,67 @@ const QuestionsList: React.FC<QuestionsListProps> = ({
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.5-.676-6.172-1.834C5.358 12.621 5 12.173 5 11.718V7.282c0-.455.358-.903.828-1.448C7.5 4.676 9.66 4 12 4s4.5.676 6.172 1.834c.47.545.828.993.828 1.448v4.436c0 .455-.358.903-.828 1.448z" />
           </svg>
           <p className="text-gray-500">No questions match the selected filters.</p>
+        </div>
+      )}
+
+      {/* Total Rating Summary */}
+      {filteredQuestions.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6 mt-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-600 text-white rounded-full w-10 h-10 flex items-center justify-center">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-blue-900">Interview Assessment Summary</h3>
+                <p className="text-sm text-blue-700">
+                  {totalRating ? `${totalRating.count} of ${totalRating.total} questions rated` : `0 of ${filteredQuestions.length} questions rated`}
+                </p>
+              </div>
+            </div>
+            
+            <div className="text-center sm:text-right">
+              {totalRating ? (
+                <>
+                  <div className="text-3xl font-bold text-blue-600 mb-1">
+                    {totalRating.average.toFixed(1)}/5.0
+                  </div>
+                  <div className="flex justify-center sm:justify-end items-center gap-1 mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg
+                        key={star}
+                        className={`w-5 h-5 ${
+                          star <= Math.round(totalRating.average)
+                            ? 'text-yellow-400 fill-current'
+                            : 'text-gray-300'
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                        />
+                      </svg>
+                    ))}
+                  </div>
+                  <div className="text-sm text-blue-600 font-medium">
+                    Average Rating
+                  </div>
+                </>
+              ) : (
+                <div className="text-gray-500">
+                  <div className="text-xl font-semibold mb-1">No Ratings Yet</div>
+                  <div className="text-sm">Rate questions to see summary</div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
