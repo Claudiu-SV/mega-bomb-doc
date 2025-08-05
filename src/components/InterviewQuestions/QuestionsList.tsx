@@ -1,5 +1,5 @@
 import type { InterviewQuestion } from '../../types';
-import React from 'react';
+import React, { useState } from 'react';
 import { useInterviewStore } from '../../stores/useInterviewStore';
 
 interface QuestionsListProps {
@@ -9,6 +9,8 @@ interface QuestionsListProps {
 const QuestionsList: React.FC<QuestionsListProps> = ({
   filteredQuestions
 }) => {
+  const [hoveredRatings, setHoveredRatings] = useState<Record<string, number>>({});
+  const ratingLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
   const { getCategoryColor, getDifficultyColor, updateQuestionRating, updateQuestionComment } = useInterviewStore();
 
   // Calculate total rating (average of all rated questions)
@@ -64,39 +66,58 @@ const QuestionsList: React.FC<QuestionsListProps> = ({
                 </div>
               )}
 
-              {/* Rating Section */}
-              <div className="mt-4">
-                <label htmlFor={`rating-${question.id}`} className="block text-sm font-medium text-gray-700 mb-1">
-                  Rating:
-                </label>
-                <select
-                  id={`rating-${question.id}`}
-                  value={question.rating || ''}
-                  onChange={(e) => updateQuestionRating(question.id, parseInt(e.target.value) || 0)}
-                  className="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Select rating</option>
-                  <option value="1">1 - Poor</option>
-                  <option value="2">2 - Fair</option>
-                  <option value="3">3 - Good</option>
-                  <option value="4">4 - Very Good</option>
-                  <option value="5">5 - Excellent</option>
-                </select>
-              </div>
+              {/* Assessment Section */}
+              <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                  {/* Rating */}
+                  <div>
+                <h4 className="text-md font-semibold text-gray-800 mb-3">Your Assessment</h4>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Candidate Rating
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="flex"
+                        onMouseLeave={() => setHoveredRatings(prev => ({ ...prev, [question.id]: 0 }))}
+                      >
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            className={`text-3xl transition-all duration-150 ease-in-out transform hover:scale-125 focus:outline-none ${
+                              (hoveredRatings[question.id] || question.rating || 0) >= star
+                                ? 'text-yellow-400'
+                                : 'text-gray-300'
+                            }`}
+                            onClick={() => updateQuestionRating(question.id, star === question.rating ? 0 : star)}
+                            onMouseEnter={() => setHoveredRatings(prev => ({ ...prev, [question.id]: star }))}
+                            aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </div>
+                      <span className="text-sm text-gray-600 font-medium w-28 h-6">
+                        {ratingLabels[hoveredRatings[question.id] || question.rating || 0]}
+                      </span>
+                    </div>
+                  </div>
 
-              {/* Comment Section */}
-              <div className="mt-4">
-                <label htmlFor={`comment-${question.id}`} className="block text-sm font-medium text-gray-700">
-                  Comments:
-                </label>
-                <textarea
-                  id={`comment-${question.id}`}
-                  rows={3}
-                  value={question.comment || ''}
-                  onChange={(e) => updateQuestionComment(question.id, e.target.value)}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2"
-                  placeholder="Add your comments here..."
-                />
+                  {/* Comments */}
+                  <div>
+                    <label htmlFor={`comment-${question.id}`} className="block text-sm font-medium text-gray-700 mb-2">
+                      Additional Comments
+                    </label>
+                    <textarea
+                      id={`comment-${question.id}`}
+                      rows={3}
+                      value={question.comment || ''}
+                      onChange={(e) => updateQuestionComment(question.id, e.target.value)}
+                      className="block w-full bg-white border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm p-2 transition-shadow focus:shadow-lg"
+                      placeholder="Strengths, weaknesses, examples..."
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>

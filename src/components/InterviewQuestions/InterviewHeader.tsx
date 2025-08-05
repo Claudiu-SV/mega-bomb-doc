@@ -4,15 +4,10 @@ import { useInterviewStore } from '../../stores/useInterviewStore';
 
 interface InterviewHeaderProps {
   interview: GeneratedInterview;
-  onStartOver: () => void;
-  onExport?: () => void;
-  formatTime: (minutes: number) => string;
 }
 
 const InterviewHeader: React.FC<InterviewHeaderProps> = ({
   interview,
-  onStartOver,
-  onExport
 }) => {
   // Get formatTime from the store
   const { formatTime } = useInterviewStore();
@@ -28,21 +23,18 @@ const InterviewHeader: React.FC<InterviewHeaderProps> = ({
             Estimated time: {formatTime(interview.totalEstimatedTime)}
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 flex-shrink-0">
-          {onExport && (
-            <button
-              onClick={onExport}
-              className="px-3 sm:px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-            >
-              Export PDF
-            </button>
-          )}
-          <button
-            onClick={onStartOver}
-            className="px-3 sm:px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Start Over
-          </button>
+        <div className="flex flex-col items-end gap-2 text-right flex-shrink-0 sm:max-w-sm">
+          <div className="flex flex-wrap gap-2 justify-end">
+            <span className="px-3 py-1 text-xs font-medium text-indigo-800 bg-indigo-100 rounded-full">
+              {interview.jobRequirements.department}
+            </span>
+            <span className="px-3 py-1 text-xs font-medium text-purple-800 bg-purple-100 rounded-full capitalize">
+              {interview.jobRequirements.experienceLevel} Level
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 truncate" title={interview.jobRequirements.requiredSkills}>
+            <strong>Skills:</strong> {interview.jobRequirements.requiredSkills}
+          </p>
         </div>
       </div>
     </div>
