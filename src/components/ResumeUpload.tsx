@@ -86,22 +86,25 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sm:p-8">
       <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4 sm:mb-6">
         Upload Resume
       </h2>
 
       {!uploadedResume ? (
         <div
-          className={`relative border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors ${
+          className={`relative border-2 border-dashed rounded-xl p-8 sm:p-12 text-center transition-all duration-300 cursor-pointer ${
             dragActive
-              ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-300 hover:border-gray-400'
+              ? 'border-green-400 bg-green-50 scale-[1.02]'
+              : isLoading
+              ? 'border-gray-300 bg-gray-50'
+              : 'border-green-300 bg-green-50/30 hover:border-green-400 hover:bg-green-50/50'
           }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
+          onClick={() => !isLoading && fileInputRef.current?.click()}
         >
           <input
             ref={fileInputRef}
@@ -112,34 +115,65 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({
             disabled={isLoading}
           />
 
-          <div className="space-y-4">
+          <div className="space-y-6">
+            {/* Upload Icon */}
             <div className="flex justify-center">
-              <svg
-                className="w-12 h-12 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-colors ${
+                dragActive
+                  ? 'bg-green-500 text-white'
+                  : 'bg-green-100 text-green-600'
+              }`}>
+                <svg
+                  className="w-8 h-8"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
+                </svg>
+              </div>
             </div>
 
+            {/* Upload Text */}
             <div>
-              <p className="text-lg font-medium text-gray-900">
-                Drop your resume here, or{' '}
-                <span className="text-blue-600 hover:text-blue-500 cursor-pointer">
-                  browse
-                </span>
+              <h3 className={`text-xl font-semibold mb-2 transition-colors ${
+                dragActive ? 'text-green-700' : 'text-gray-700'
+              }`}>
+                Upload The Document
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                {dragActive 
+                  ? 'Drop your file here to upload'
+                  : 'Drag and drop your resume here, or click to browse'
+                }
               </p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-xs text-gray-400">
                 Supports PDF, DOC, DOCX, and TXT files up to 10MB
               </p>
             </div>
+
+            {/* Browse Button */}
+            {!dragActive && (
+              <button
+                type="button"
+                disabled={isLoading}
+                className="inline-flex items-center px-6 py-3 border border-green-300 rounded-xl text-sm font-medium text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRef.current?.click();
+                }}
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                Choose File
+              </button>
+            )}
           </div>
         </div>
       ) : (

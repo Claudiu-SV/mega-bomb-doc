@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAppStore } from '../store/useAppStore';
+import { useAppStore } from '../stores/useAppStore';
 
 const Steps: React.FC = () => {
   const currentStep = useAppStore((state) => state.currentStep);
