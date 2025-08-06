@@ -2,7 +2,7 @@ import type { GeneratedInterview } from '../types';
 // @ts-expect-error - html2pdf.js doesn't have TypeScript definitions
 import html2pdf from 'html2pdf.js';
 
-export const exportInterviewToPDF = (interview: GeneratedInterview, showDialog?: (title: string, message: string, type: 'success' | 'error' | 'warning') => void) => {
+export const exportInterviewToPDF = (interview: GeneratedInterview, showDialog?: (title: string, message: string, type: 'success' | 'error' | 'warning') => void, preview: boolean = false) => {
   // Filter questions to only include those with ratings
   const ratedQuestions = interview.questions.filter(question => question.rating && question.rating > 0);
   
@@ -121,7 +121,7 @@ export const exportInterviewToPDF = (interview: GeneratedInterview, showDialog?:
     return `
       <div style="position: relative; width: 60px; height: 60px; border-radius: 50%; background: ${colors.outline}; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
         <div style="position: absolute; width: 50px; height: 50px; border-radius: 50%; background: ${color}; display: flex; align-items: center; justify-content: center;">
-          <span style="color: white; font-size: 16px; font-weight: 600;">${rating}</span>
+          <span style="color: white; font-size: 16px; font-weight: 600; padding: 0 12px 16px 12px;">${rating}</span>
         </div>
       </div>
     `;
@@ -134,7 +134,7 @@ export const exportInterviewToPDF = (interview: GeneratedInterview, showDialog?:
       
       <!-- Clean Header -->
       <div style="background: ${colors.primary}; padding: 30px 20px; border-radius: 12px; margin-bottom: 30px; text-align: center; box-shadow: ${elevation[2]};">
-        <h1 style="color: white; margin: 0 0 8px 0; font-size: 32px; font-weight: 400;">Interview Questions</h1>
+        <h1 style="color: white; font-size: 32px; font-weight: 400;">Interview&nbsp;&nbsp;&nbsp;Questions</h1>
         <p style="color: rgba(255,255,255,0.9); font-size: 16px; margin: 0;">Generated on ${formatDate(filteredInterview.generatedAt)}</p>
       </div>
       
@@ -226,7 +226,7 @@ export const exportInterviewToPDF = (interview: GeneratedInterview, showDialog?:
              <table style="width: 100%; border-collapse: collapse;">
                <tr>
                  <td style="width: 120px; vertical-align: top;">
-                   <div style="background: ${colors.primary}; color: white; padding: 12px 16px; border-radius: 8px; text-align: center; font-size: 16px; font-weight: 500;">Q${index + 1}</div>
+                   <div style="background: ${colors.primary}; color: white; padding: 0 12px 16px 12px; border-radius: 8px; text-align: center; font-size: 16px; font-weight: 500;">Q${index + 1}</div>
                  </td>
                  <td style="text-align: center; vertical-align: top; padding: 0 20px;">
                    <div style="margin-bottom: 8px;">
@@ -242,9 +242,9 @@ export const exportInterviewToPDF = (interview: GeneratedInterview, showDialog?:
              
              <!-- Tags Row -->
              <div style="text-align: center; margin-top: 16px;">
-               <span style="display: inline-block; margin: 4px 6px; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 500; text-transform: uppercase; ${getCategoryBadgeStyle(question.category)}">${question.category}</span>
-               <span style="display: inline-block; margin: 4px 6px; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 500; text-transform: uppercase; ${getDifficultyBadgeStyle(question.difficulty)}">${question.difficulty}</span>
-               <span style="display: inline-block; margin: 4px 6px; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 500; background: ${colors.onSurfaceVariant}; color: white;">${question.suggestedTime} MIN</span>
+               <span style="display: inline-block; margin: 4px 6px; padding-top: 6px; padding-bottom: 16px; padding-left: 12px; padding-right: 12px; border-radius: 8px; font-size: 11px; font-weight: 500; text-transform: uppercase; ${getCategoryBadgeStyle(question.category)}">${question.category}</span>
+               <span style="display: inline-block; margin: 4px 6px; padding-top: 6px; padding-bottom: 16px; padding-left: 12px; padding-right: 12px; border-radius: 8px; font-size: 11px; font-weight: 500; text-transform: uppercase; ${getDifficultyBadgeStyle(question.difficulty)}">${question.difficulty}</span>
+               <span style="display: inline-block; margin: 4px 6px; padding-top: 6px; padding-bottom: 16px; padding-left: 12px; padding-right: 12px; border-radius: 8px; font-size: 11px; font-weight: 500; background: ${colors.onSurfaceVariant}; color: white;">${question.suggestedTime} MIN</span>
              </div>
            </div>
            
@@ -302,6 +302,49 @@ export const exportInterviewToPDF = (interview: GeneratedInterview, showDialog?:
     </div>
   `;
 
+  // If preview mode, open in new window
+  if (preview) {
+    const newWindow = window.open('', '_blank', 'width=800,height=1000,scrollbars=yes');
+    if (newWindow) {
+      newWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Interview Questions Preview</title>
+          <style>
+            body { margin: 0; padding: 0; }
+            .preview-header {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              background: #1976D2;
+              color: white;
+              padding: 10px 20px;
+              z-index: 1000;
+              font-family: Arial, sans-serif;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            }
+            .preview-content {
+              margin-top: 60px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="preview-header">
+            <strong>PDF Preview Mode</strong> - This is how your PDF will look. Close this window when done.
+          </div>
+          <div class="preview-content">
+            ${element.innerHTML}
+          </div>
+        </body>
+        </html>
+      `);
+      newWindow.document.close();
+    }
+    return;
+  }
+
   // Generate filename with job title and date
   const fileName = `Interview_Questions_${filteredInterview.jobRequirements.title.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
 
@@ -331,14 +374,9 @@ export const exportInterviewToPDF = (interview: GeneratedInterview, showDialog?:
       }
     })
     .catch((error: Error) => {
-      console.error('PDF generation error:', error);
-      element.remove();
-      
-      // Show error message
+      console.error('PDF generation failed:', error);
       if (showDialog) {
-        showDialog('Export Failed', 'There was an error generating the PDF. Please try again.', 'error');
-      } else {
-        alert('There was an error generating the PDF. Please try again.');
+        showDialog('PDF Export Failed', 'There was an error generating the PDF. Please try again.', 'error');
       }
     });
 }; 

@@ -114,7 +114,13 @@ function App() {
 
   const handleExport = () => {
     if (interview) {
-      exportInterviewToPDF(interview, showDialog);
+      exportInterviewToPDF(interview, showDialog, false);
+    }
+  };
+
+  const handlePreview = () => {
+    if (interview) {
+      exportInterviewToPDF(interview, showDialog, true);
     }
   };
 
@@ -182,6 +188,7 @@ function App() {
             interview={generatedInterview}
             onStartOver={handleStartOver}
             onExport={handleExport}
+            onPreview={handlePreview}
           />
         ) : null;
       

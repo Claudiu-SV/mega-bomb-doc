@@ -1,27 +1,29 @@
 import React, { useEffect, useState } from 'react';
+
 import type { GeneratedInterview } from '../types';
-import InterviewHeader from './InterviewQuestions/InterviewHeader';
 import InterviewFilters from './InterviewQuestions/InterviewFilters';
+import InterviewFooter from './InterviewQuestions/InterviewFooter';
+import InterviewHeader from './InterviewQuestions/InterviewHeader';
 import QuestionsList from './InterviewQuestions/QuestionsList';
 import { useInterviewStore } from '../stores/useInterviewStore';
-import InterviewFooter from './InterviewQuestions/InterviewFooter';
 
 interface InterviewQuestionsProps {
   interview: GeneratedInterview;
   onStartOver: () => void;
   onExport?: () => void;
+  onPreview?: () => void;
 }
 
 const InterviewQuestions: React.FC<InterviewQuestionsProps> = ({
   interview,
   onStartOver,
-  onExport
+  onExport,
+  onPreview
 }) => {
   // Use the interview store
   const {
     setInterview,
     startOver,
-    formatTime,
     filteredQuestions: getFilteredQuestions
   } = useInterviewStore();
 
@@ -82,7 +84,8 @@ const InterviewQuestions: React.FC<InterviewQuestionsProps> = ({
       {/* Footer */}
       <InterviewFooter
         onStartOver={handleStartOver} 
-        onExport={onExport} 
+        onExport={onExport}
+        onPreview={onPreview}
       />
       {/* Floating Scroll Buttons */}
       {showScrollButtons && (

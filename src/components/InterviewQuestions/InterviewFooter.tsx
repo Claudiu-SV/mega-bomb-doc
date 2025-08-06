@@ -4,11 +4,13 @@ import { useInterviewStore } from '../../stores/useInterviewStore';
 interface InterviewFooterProps {
   onStartOver: () => void;
   onExport?: () => void;
+  onPreview?: () => void;
 }
 
 const InterviewFooter: React.FC<InterviewFooterProps> = ({
   onStartOver,
-  onExport
+  onExport,
+  onPreview
 }) => {
   // Get live interview data from the store to check for ratings
   const { interview } = useInterviewStore();
@@ -32,13 +34,22 @@ const InterviewFooter: React.FC<InterviewFooterProps> = ({
           >
             Start Over
           </button>
+          {onPreview && (
+            <button
+              onClick={onPreview}
+              disabled={!hasRatedQuestions}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Preview PDF
+            </button>
+          )}
           {onExport && (
             <button
               onClick={onExport}
               disabled={!hasRatedQuestions}
               className="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Finish & Export
+              Export PDF
             </button>
           )}
         </div>
