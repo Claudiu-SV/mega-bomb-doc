@@ -15,6 +15,7 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({
   uploadedResume
 }) => {
   const [dragActive, setDragActive] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrag = (e: React.DragEvent) => {
@@ -104,6 +105,8 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
         >
           <input
             ref={fileInputRef}
@@ -140,12 +143,18 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({
 
             {/* Upload Text */}
             <div>
-              <h3 className={`text-xl font-semibold mb-2 transition-colors ${
-                dragActive ? 'text-green-700' : 'text-gray-700'
+              <h3 className={`text-xl font-semibold mb-2 transition-all duration-300 ${
+                dragActive ? 'text-green-700' : isHovered ? 'text-green-600 scale-105' : 'text-gray-700'
               }`}>
                 Upload The Document
               </h3>
-              <p className="text-sm text-gray-500 mb-4">
+              <p className={`text-sm mb-4 transition-all duration-300 ${
+                dragActive 
+                  ? 'text-gray-600'
+                  : isHovered 
+                  ? 'text-green-600 scale-105' 
+                  : 'text-gray-500'
+              }`}>
                 {dragActive 
                   ? 'Drop your file here to upload'
                   : 'Drag and drop your resume here, or click to browse'
@@ -161,7 +170,7 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex items-center px-6 py-3 border border-green-300 rounded-xl text-sm font-medium text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 active:bg-green-100"
+                className="inline-flex items-center px-6 py-3 border border-green-300 rounded-xl text-sm font-medium text-green-700 bg-white hover:bg-green-50 hover:border-green-400 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={(e) => {
                   e.stopPropagation();
                   fileInputRef.current?.click();
