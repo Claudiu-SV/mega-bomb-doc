@@ -93,7 +93,7 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({
 
       {!uploadedResume ? (
         <div
-          className={`relative border-2 border-dashed rounded-xl p-8 sm:p-12 text-center transition-all duration-300 ${
+          className={`relative border-2 border-dashed rounded-xl p-8 sm:p-12 text-center transition-all duration-300 cursor-pointer ${
             dragActive
               ? 'border-green-400 bg-green-50 scale-[1.02]'
               : isLoading
@@ -104,6 +104,7 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
+          onClick={() => !isLoading && fileInputRef.current?.click()}
         >
           <input
             ref={fileInputRef}
@@ -161,7 +162,7 @@ const ResumeUpload: React.FC<ResumeUploadProps> = ({
               <button
                 type="button"
                 disabled={isLoading}
-                className="inline-flex items-center px-6 py-3 border border-green-300 rounded-xl text-sm font-medium text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 active:bg-green-100"
+                className="inline-flex items-center px-6 py-3 border border-green-300 rounded-xl text-sm font-medium text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={(e) => {
                   e.stopPropagation();
                   fileInputRef.current?.click();

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileUploadRouter } from './routes/fileUpload';
 import { interviewRouter } from './routes/interview';
+import { comparisonRouter } from './routes/comparison';
 import { errorHandler, notFound } from './middleware/errorHandler';
 
 // Load environment variables
@@ -30,6 +31,8 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Routes
 app.use('/api/upload', fileUploadRouter);
 app.use('/api/interview', interviewRouter);
+app.use('/api/comparison', comparisonRouter);
+app.use('/api/comparison', comparisonRouter);
 
 // Root route
 app.get('/', (req, res) => {

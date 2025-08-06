@@ -7,6 +7,7 @@ import Layout from './components/Layout';
 import LoadingSpinner from './components/LoadingSpinner';
 import ResumeUpload from './components/ResumeUpload';
 import Steps from './components/Steps';
+import CandidateComparisonModal from './components/CandidateComparisonModal';
 import { exportInterviewToPDF } from './utils/pdfExport';
 import { useAppStore } from './stores/useAppStore';
 import { useDialog } from './hooks/useDialog';
@@ -203,6 +204,7 @@ function App() {
         type={dialog.type}
         onClose={closeDialog}
       />
+      <CandidateComparisonModal />
     </Layout>
   );
 }
