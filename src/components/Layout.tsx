@@ -13,7 +13,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex justify-between items-center h-14 sm:h-16">
             <div className="flex items-center min-w-0">
               <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate">
-                <span className="hidden sm:inline">Interview Question Generator</span>
+                <span className="hidden sm:inline">RecruitAI</span>
                 <span className="sm:hidden">IQ Generator</span>
               </h1>
             </div>
@@ -35,7 +35,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <footer className="bg-white border-t border-gray-200 mt-auto">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-3 sm:py-4">
           <p className="text-center text-xs sm:text-sm text-gray-500">
-            © {new Date().getFullYear()} Interview Question Generator. Built by Mega Bomb Squad.
+            © {new Date().getFullYear()} RecruitAI. Built by Mega Bomb Squad.
           </p>
         </div>
       </footer>

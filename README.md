@@ -1,4 +1,4 @@
-# Mega Bomb Doc - AI-Powered Interview Question Generator
+# Mega Bomb Doc - AI-Powered RecruitAI
 
 > An intelligent web application that analyzes candidate resumes against job requirements and generates tailored interview questions using OpenAI's GPT models.
 

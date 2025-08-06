@@ -33,7 +33,7 @@ app.use('/api/interview', interviewRouter);
 
 // Root route
 app.get('/', (req, res) => {
-  res.json({ message: 'Interview Question Generator API' });
+  res.json({ message: 'RecruitAI API' });
 });
 
 // Error handling middleware
