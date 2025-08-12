@@ -1,8 +1,9 @@
+import type { GeneratedInterview, JobRequirements } from '../types';
+
 import OpenAI from 'openai';
+import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
-import dotenv from 'dotenv';
-import type { GeneratedInterview, JobRequirements } from '../types';
 
 // Load environment variables
 const envLocalPath = path.resolve(__dirname, '../../.env.local');
@@ -85,7 +86,6 @@ async function extractResumeText(resumePath: string): Promise<string> {
 function getMockResumeContent(filePath: string): string {
   // Get file extension to determine how to handle it
   const ext = path.extname(filePath).toLowerCase();
-  const fileName = path.basename(filePath);
   
   // For demo purposes, we're just returning mock content
   // In a real app, you'd use libraries like pdf-parse or mammoth for PDFs and DOCs
@@ -154,6 +154,7 @@ Certification in User Experience Design | UX Academy | 2020
       const content = fs.readFileSync(filePath, 'utf-8');
       return content;
     } catch (err) {
+      console.error('Error reading file:', err);
       return `
 Michael Johnson
 Backend Developer
@@ -271,7 +272,6 @@ export async function generateInterviewQuestions(
     `;
     
     // Call OpenAI API with retry logic and error handling
-    const startTime = Date.now();
     let response;
     
     try {
@@ -288,7 +288,7 @@ export async function generateInterviewQuestions(
       });
       
       // API call completed
-    } catch (apiError: any) {
+    } catch (apiError) {
       console.error('OpenAI API error:', apiError);
       
       // Handle specific API errors
@@ -328,6 +328,7 @@ export async function generateInterviewQuestions(
       try {
         parsedResponse = JSON.parse(jsonMatch[0]);
       } catch (parseError) {
+        console.error('Failed to parse JSON:', parseError);
         // If standard parsing fails, attempt to fix common JSON issues
         // Attempting to fix malformed JSON
         
@@ -363,11 +364,18 @@ export async function generateInterviewQuestions(
       
       // Format as GeneratedInterview
       const result = {
-        questions: parsedResponse.questions.map((q: any) => ({
-          id: q.id || String(Math.random().toString(36).substr(2, 9)),
-          text: q.text || q.question || '',
-          difficulty: q.difficulty || 'Medium',
-          category: q.category || 'Technical',
+        questions: parsedResponse.questions.map((q: {
+          id?: string;
+          text?: string;
+          question?: string;
+          difficulty?: string;
+          category?: string;
+          evaluationCriteria?: string;
+        }) => ({
+          id: q.id ?? String(Math.random().toString(36).substr(2, 9)),
+          text: q.text ?? q.question ?? '',
+          difficulty: q.difficulty ?? 'Medium',
+          category: q.category ?? 'Technical',
           evaluationCriteria: q.evaluationCriteria || ''
         }))
       };
@@ -521,4 +529,153 @@ function generateMockInterviewQuestions(jobRequirements: JobRequirements): Gener
       }
     ]
   };
+}
+
+/**
+ * Analyze and compare candidates based on job criteria
+ */
+export async function analyzeCandidateComparison(
+  criteria: {
+    jobTitle: string;
+    requiredSkills?: string[];
+    experienceLevel?: string;
+    department?: string;
+    weightings?: {
+      technicalSkills?: number;
+      experience?: number;
+      education?: number;
+    };
+  },
+  candidates: Array<{ id: string; name: string; extractedText: string }>
+): Promise<Array<{ candidateId: string; scores: {
+  technicalSkills: number;
+  experience: number;
+  education: number;
+  overallMatch: number;
+  strengths: string[];
+  weaknesses: string[];
+  summary: string;
+} }>> {
+  try {
+    if (!openai) {
+      // Return mock analysis for development
+      return candidates.map((candidate, index) => ({
+        candidateId: candidate.id,
+        scores: {
+          technicalSkills: Math.round(70 + Math.random() * 30),
+          experience: Math.round(60 + Math.random() * 40),
+          education: Math.round(65 + Math.random() * 35),
+          overallMatch: Math.round(70 + Math.random() * 25),
+          strengths: [
+            'Strong technical background',
+            'Relevant experience',
+            'Good communication skills'
+          ],
+          weaknesses: [
+            'Limited experience with specific framework',
+            'Could improve leadership skills'
+          ],
+          summary: `${candidate.name} is a ${index % 2 === 0 ? 'strong' : 'good'} candidate with relevant experience in the field. Shows potential for growth and has the necessary technical skills.`
+        }
+      }));
+    }
+
+    const prompt = `
+You are an expert HR analyst. Analyze and compare the following candidates for a ${criteria.jobTitle} position.
+
+Job Requirements:
+- Title: ${criteria.jobTitle}
+- Required Skills: ${criteria.requiredSkills?.join(', ') || 'Not specified'}
+- Experience Level: ${criteria.experienceLevel}
+- Department: ${criteria.department}
+
+Weightings for evaluation:
+- Technical Skills: ${criteria.weightings?.technicalSkills || 40}%
+- Experience: ${criteria.weightings?.experience || 35}%
+- Education: ${criteria.weightings?.education || 25}%
+
+Candidates:
+${candidates.map((candidate, index) => `
+Candidate ${index + 1}: ${candidate.name}
+Resume Content:
+${candidate.extractedText}
+`).join('\n')}
+
+For each candidate, provide scores (0-100) for:
+1. Technical Skills match
+2. Experience relevance
+3. Education qualification
+4. Overall match percentage
+
+Also provide:
+- Top 3 strengths
+- Top 2 areas for improvement
+- Brief summary (2-3 sentences)
+
+Format your response as a JSON array with this structure:
+[
+  {
+    "candidateId": "candidate_id",
+    "scores": {
+      "technicalSkills": 85,
+      "experience": 78,
+      "education": 90,
+      "overallMatch": 82,
+      "strengths": ["strength1", "strength2", "strength3"],
+      "weaknesses": ["weakness1", "weakness2"],
+      "summary": "Brief summary of candidate"
+    }
+  }
+]
+`;
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert HR analyst specializing in candidate evaluation and comparison. Provide detailed, objective assessments.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000
+    });
+
+    const responseContent = completion.choices[0]?.message?.content;
+    if (!responseContent) {
+      throw new Error('No response from OpenAI');
+    }
+
+    // Parse the JSON response
+    const analysisResults = JSON.parse(responseContent);
+    return analysisResults;
+
+  } catch (error) {
+    console.error('Error in candidate analysis:', error);
+    
+    // Return mock data as fallback
+    return candidates.map((candidate, index) => ({
+      candidateId: candidate.id,
+      scores: {
+        technicalSkills: Math.round(70 + Math.random() * 30),
+        experience: Math.round(60 + Math.random() * 40),
+        education: Math.round(65 + Math.random() * 35),
+        overallMatch: Math.round(70 + Math.random() * 25),
+        strengths: [
+          'Strong technical background',
+          'Relevant experience',
+          'Good communication skills'
+        ],
+        weaknesses: [
+          'Limited experience with specific framework',
+          'Could improve leadership skills'
+        ],
+        summary: `${candidate.name} is a ${index % 2 === 0 ? 'strong' : 'good'} candidate with relevant experience in the field.`
+      }
+    }));
+  }
 }

@@ -1,10 +1,11 @@
-import express from 'express';
+import { errorHandler, notFound } from './middleware/errorHandler';
+
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path';
+import express from 'express';
 import { fileUploadRouter } from './routes/fileUpload';
 import { interviewRouter } from './routes/interview';
-import { errorHandler, notFound } from './middleware/errorHandler';
+import path from 'path';
 
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
@@ -58,7 +59,7 @@ const server = app.listen(PORT, () => {
 });
 
 // Handle server errors
-server.on('error', (error: any) => {
+server.on('error', (error: NodeJS.ErrnoException) => {
   console.error('='.repeat(50));
   if (error.code === 'EADDRINUSE') {
     console.error(`Port ${PORT} is already in use. Please choose a different port.`);

@@ -1,5 +1,6 @@
 import type { JobRequirements, UploadProgress } from './types';
 
+import CandidateComparisonModal from './components/CandidateComparisonModal';
 import Dialog from './components/Dialog';
 import InterviewQuestions from './components/InterviewQuestions';
 import JobRequirementsForm from './components/JobRequirementsForm';
@@ -8,6 +9,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import ResumeUpload from './components/ResumeUpload';
 import Steps from './components/Steps';
 import { exportInterviewToPDF } from './utils/pdfExport';
+import { saveCandidateFromInterview } from './utils/candidateAutoSave';
 import { useAppStore } from './stores/useAppStore';
 import { useDialog } from './hooks/useDialog';
 import { useInterviewGeneration } from './hooks/useApi';
@@ -71,6 +73,14 @@ function App() {
       // Update state with results
       setResume(resume);
       setGeneratedInterview(interview);
+
+      // Immediately save candidate so the name appears in the Compare list
+      try {
+        saveCandidateFromInterview(interview, jobRequirements, resume);
+      } catch (e) {
+        console.warn('Candidate not saved on upload:', e);
+      }
+
       setUploadProgress({
         fileName: file.name,
         progress: 100,
@@ -109,12 +119,37 @@ function App() {
   };
 
   const handleStartOver = () => {
+    // Save current interview for comparison before starting over
+    if (interview && jobRequirements && resume) {
+      try {
+        saveCandidateFromInterview(interview, jobRequirements, resume);
+        showDialog('Interview Saved', 'Current interview has been saved for comparison before starting over.', 'success');
+        console.log('✅ Interview saved before starting over');
+      } catch (error) {
+        console.error('Failed to save interview before starting over:', error);
+        showDialog('Save Failed', 'Could not save interview for comparison, but you can continue.', 'warning');
+      }
+    }
     resetApp();
   };
 
-  const handleExport = () => {
-    if (interview) {
-      exportInterviewToPDF(interview, showDialog, false);
+  const handleExport = (type: 'image-based' | 'text-based' | 'save' = 'image-based') => {
+    if (interview && jobRequirements && resume) {
+      if (type === 'save') {
+        // Just save the candidate without generating PDF
+        try {
+          saveCandidateFromInterview(interview, jobRequirements, resume);
+          showDialog('Candidate Saved', 'Candidate assessment has been saved for comparison.', 'success');
+          console.log('✅ Candidate saved for comparison');
+        } catch (error) {
+          console.error('Failed to save candidate:', error);
+          showDialog('Save Failed', 'Failed to save candidate for comparison. Please try again.', 'error');
+        }
+      } else {
+        // Export PDF (revert to original functionality)
+        const useTextBasedPDF = type === 'text-based';
+        exportInterviewToPDF(interview, showDialog, useTextBasedPDF);
+      }
     }
   };
 
@@ -188,8 +223,7 @@ function App() {
             interview={generatedInterview}
             onStartOver={handleStartOver}
             onExport={handleExport}
-            onPreview={handlePreview}
-          />
+            onPreview={handlePreview}            />
         ) : null;
       
       default:
@@ -210,6 +244,7 @@ function App() {
         type={dialog.type}
         onClose={closeDialog}
       />
+      <CandidateComparisonModal />
     </Layout>
   );
 }

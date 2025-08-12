@@ -1,10 +1,17 @@
 import React from 'react';
+import { useComparisonStore } from '../stores/useComparisonStore';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const { setComparisonModalOpen } = useComparisonStore();
+
+  const handleOpenComparison = () => {
+    setComparisonModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
@@ -18,6 +25,26 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </h1>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              <button
+                onClick={handleOpenComparison}
+                className="flex items-center px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              >
+                <svg 
+                  className="w-4 h-4 mr-2" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" 
+                  />
+                </svg>
+                <span className="hidden sm:inline">Compare Candidates</span>
+                <span className="sm:hidden">Compare</span>
+              </button>
               <span className="text-xs sm:text-sm text-gray-500 hidden xs:inline">
                 Powered by OpenAI
               </span>

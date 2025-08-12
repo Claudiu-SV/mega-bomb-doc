@@ -5,6 +5,7 @@
 ## 🚀 Features
 
 ### Core Functionality
+
 - **Smart Job Requirements Form** with 35+ predefined IT job titles and descriptions
 - **Resume Upload & Analysis** with drag-and-drop interface
 - **AI-Powered Interview Generation** using OpenAI GPT models
@@ -12,6 +13,7 @@
 - **Responsive Design** optimized for desktop and mobile
 
 ### Key Highlights
+
 - ✅ **Predefined IT Jobs Database** - Quick selection from Software Engineer, Data Scientist, DevOps Engineer, and 32+ other roles
 - ✅ **Auto-fill Job Descriptions** - Automatically populate job descriptions when selecting predefined roles
 - ✅ **Resume Parsing** - Upload PDF/DOC resumes with progress tracking
@@ -23,6 +25,7 @@
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **React 19** with TypeScript
 - **Vite** for fast development and building
 - **Tailwind CSS** for responsive styling
@@ -32,6 +35,7 @@
 - **React Hot Toast** for notifications
 
 ### Backend
+
 - **Node.js** with Express.js
 - **TypeScript** for type safety
 - **OpenAI API** for interview question generation
@@ -39,6 +43,7 @@
 - **CORS** enabled for cross-origin requests
 
 ### Development Tools
+
 - **ESLint** with TypeScript support
 - **Concurrently** for running frontend and backend
 - **ts-node-dev** for backend development
@@ -46,6 +51,7 @@
 ## 📦 Installation
 
 ### Prerequisites
+
 - Node.js (v20.19.0 or higher)
 - npm or yarn
 - OpenAI API key
@@ -53,17 +59,20 @@
 ### Setup
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd mega-bomb-doc
    ```
 
 2. **Install frontend dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Install backend dependencies**
+
    ```bash
    cd server
    npm install
@@ -71,12 +80,14 @@
    ```
 
 4. **Configure environment variables**
+
    ```bash
    cd server
    cp .env.example .env.local
    ```
-   
+
    Edit `.env.local` and add your OpenAI API key:
+
    ```env
    OPENAI_API_KEY=your_openai_api_key_here
    PORT=5000
@@ -91,7 +102,9 @@
 ## 🚀 Usage
 
 ### Development Mode
+
 Run both frontend and backend concurrently:
+
 ```bash
 npm start
       },
